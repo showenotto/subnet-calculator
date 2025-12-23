@@ -1,0 +1,20 @@
+[application]
+asset_dir = "assets"
+
+[web.app]
+
+# HTML title tag content
+title = "subnet-calculator"
+
+# include `assets` in web platform
+[web.resource]
+style = ["tailwind.css", "main.css"]
+
+# Additional JavaScript files
+script = []
+
+[web.resource.dev]
+
+# Javascript code file
+# serve: [dev-server] only
+script = []
