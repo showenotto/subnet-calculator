@@ -8,6 +8,7 @@ edition = "2021"
 
 [dependencies]
 dioxus = { version = "0.7.1", features = [] }
+gloo-timers = { version = "0.3.0", features = ["futures"] }
 ipnet = "2.11.0"
 serde = { version = "1.0.228", features = ["derive"] }
 web-sys = { version = "0.3.83", features = [
@@ -19,6 +20,7 @@ web-sys = { version = "0.3.83", features = [
   "DomTokenList",
   "Storage",
 ] }
+
 
 [features]
 default = ["desktop"]

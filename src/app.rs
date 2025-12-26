@@ -1,6 +1,6 @@
 // src/app.rs
 use dioxus::prelude::*;
-use crate::components::{Header, Footer, Tabs, ActiveTab};
+use crate::{components::{ActiveTab, Footer, Header, Tabs}, ipv4::Ipv4Tab};
 
 #[derive(Props, Clone, PartialEq)]
 struct PlaceholderProps {
@@ -22,14 +22,12 @@ pub fn App() -> Element {
                 active_tab: *active_tab.read(),
                 on_tab_change: move |tab| active_tab.set(tab)
             }
-            main { class: "flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full",
+            main { class: "flex-1 mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full",
                 match *active_tab.read() {
                     ActiveTab::Ipv4 => rsx! {
-                        div { class: "text-center py-16",
+                        div { class: "text-center py-1",
                             h2 { class: "text-4xl font-bold mb-4", "IPv4 Subnet Calculator" }
-                            p { class: "text-xl text-gray-600 dark:text-gray-400",
-                                "Input panel and live results coming in the next step!"
-                            }
+                            Ipv4Tab { }
                         }
                     },
                     ActiveTab::Ipv6 => rsx! { PlaceholderTab { name: "IPv6" } },
