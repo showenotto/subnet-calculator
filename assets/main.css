@@ -622,3 +622,14 @@
     }
   }
 }
+
+@layer components {
+    .hide-number-spinner {
+        -moz-appearance: textfield;
+    }
+    .hide-number-spinner::-webkit-inner-spin-button,
+    .hide-number-spinner::-webkit-outer-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+}

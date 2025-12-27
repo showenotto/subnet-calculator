@@ -11,6 +11,7 @@ dioxus = { version = "0.7.1", features = [] }
 gloo-timers = { version = "0.3.0", features = ["futures"] }
 ipnet = "2.11.0"
 serde = { version = "1.0.228", features = ["derive"] }
+tokio = "1.48.0"
 web-sys = { version = "0.3.83", features = [
   "Window",
   "Document",
