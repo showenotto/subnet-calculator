@@ -65,7 +65,6 @@ pub fn calculate(
         let new_prefix = 32 - (required.next_power_of_two().trailing_zeros());
         //let new_prefix = new_prefix.max(base_network.prefix_len().into());
 
-        let calculated_prefix = 32 - new_prefix;
 
         let available_usable = if 2u32.pow(32 - base_network.prefix_len() as u32) >= 2 {
                 2u32.pow(32 - base_network.prefix_len() as u32) - 2
@@ -90,7 +89,8 @@ pub fn calculate(
         (Some(new_prefix), Box::new(base_network.subnets(new_prefix).unwrap()))
     } else {
         // Basic mode
-        (None, Box::new(std::iter::once(base_network)))
+        //(None, Box::new(std::iter::once(base_network)))
+        (None, Box::new(base_network.subnets(base_network.prefix_len()).unwrap()))
     };
 
     for net in subnet_iter.take(64) {  // Limit to prevent huge lists

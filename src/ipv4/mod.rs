@@ -23,7 +23,7 @@ pub fn Ipv4Tab() -> Element {
 
     rsx! {
         //div { class: "max-w-7xl mx-auto px-4 py-8",
-        div {class: "grid grid-cols-2",
+        div {class: "grid grid-cols-3",
                 InputPanel {
                     ip_input,
                     cidr_input,
@@ -32,7 +32,7 @@ pub fn Ipv4Tab() -> Element {
                     result
                 }
             
-            div {class: "ml-5",
+            div {class: "ml-5 col-span-2",
                 ResultsPanel { result: result.read().clone() }
             }
         }

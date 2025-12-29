@@ -1,2 +1,35 @@
 @import "tailwindcss";
 @source "./src/**/*.{rs,html,css}";
+
+
+@layer utilities {
+  /* Make the spinner container taller/wider for bigger arrows */
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button {
+    width: 2.1rem;             /* Increase width */
+    height: 2.1rem;            /* Increase height (makes arrows bigger) */
+    opacity: 1;
+  }
+  /* Transparent selection on table cells themselves */
+  table td::selection,
+  table th::selection {
+    background: transparent;
+  }
+
+  /* Normal (or custom) selection on the wrapped text */
+  table span::selection {
+    background: #acd5ff; /* Light blue, matches most browsers */
+    color: #000;
+  }
+
+  /* Firefox support */
+  table td::-moz-selection,
+  table th::-moz-selection {
+    background: transparent;
+  }
+
+  table span::-moz-selection {
+    background: #acd5ff;
+    color: #000;
+  }
+}
