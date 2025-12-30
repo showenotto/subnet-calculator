@@ -1,15 +1,9 @@
 // src/ipv4/input_panel.rs
 use dioxus::prelude::*;
 
-use crate::ipv4::{calculator::calculate, types::{CIDR_OPTIONS, CalculationResult, Ipv4InputError}};
+use crate::ipv4::{calculator::calculate, types::{CIDR_OPTIONS, CalculationResult, Ipv4InputError, SubnetMode}};
 
 
-#[derive(Clone, PartialEq)]
-pub enum SubnetMode {
-    ByHosts,
-    BySubnets,
-    Inspect,
-}
 
 #[component]
 pub fn InputPanel(
@@ -23,7 +17,6 @@ pub fn InputPanel(
     let count_is_valid = count_input.read().trim().parse::<u32>().is_ok_and(|n| n >= 1);
     let show_error = matches!(current_mode, SubnetMode::ByHosts | SubnetMode::BySubnets) && !count_is_valid;
     
-    //let show_extra = *mode.read() != SubnetMode::Basic;
     let is_disabled = if *mode.read() == SubnetMode::Inspect {
         false
     } else {

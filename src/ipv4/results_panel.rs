@@ -2,6 +2,15 @@
 use dioxus::prelude::*;
 use crate::ipv4::types::{CalculationResult, Ipv4InputError, SubnetResult};
 
+
+fn get_tab_class(is_active: bool) -> &'static str {
+    if is_active {
+        "px-6 py-3 font-medium border-b-2 border-blue-600 text-blue-600 dark:text-blue-400"
+    } else {
+        "px-6 py-3 font-medium border-b-2 border-transparent text-white-600 hover:text-gray-400 dark:hover:text-gray-400"
+    }
+}
+
 #[component]
 pub fn ResultsPanel(result: Option<Result<CalculationResult, Ipv4InputError>>) -> Element {
     let mut active_tab = use_signal(|| 0); // 0 = Summary, 1 = Subnets
@@ -15,20 +24,10 @@ pub fn ResultsPanel(result: Option<Result<CalculationResult, Ipv4InputError>>) -
                 Some(Err(err)) => rsx! { ErrorMessage { err } },
                 Some(Ok(calc)) => {
                     let has_subnets = !calc.subnets.is_empty();
-                    let is_subnetted = calc.new_prefix.is_some();
 
                     // Compute classes outside rsx!
-                    let summary_tab_class = if *active_tab.read() == 0 {
-                        "px-6 py-3 font-medium border-b-2 border-blue-600 text-blue-600 dark:text-blue-400"
-                    } else {
-                        "px-6 py-3 font-medium border-b-2 border-transparent text-white-600 hover:text-gray-400 dark:hover:text-gray-400"
-                    };
-
-                    let subnets_tab_class = if *active_tab.read() == 1 {
-                        "px-6 py-3 font-medium border-b-2 border-blue-600 text-blue-600 dark:text-blue-400"
-                    } else {
-                        "px-6 py-3 font-medium border-b-2 border-transparent text-white-600 hover:text-gray-400 dark:hover:text-gray-400"
-                    };
+                    let summary_tab_class = get_tab_class(*active_tab.read() == 0);
+                    let subnets_tab_class = get_tab_class(*active_tab.read() == 1);
 
                     rsx! {
                         // Tabs bar
@@ -49,14 +48,10 @@ pub fn ResultsPanel(result: Option<Result<CalculationResult, Ipv4InputError>>) -
 
                         // Tab content
                         if *active_tab.read() == 0 || !has_subnets {
-                            div { 
-                                class: "h-90 overflow-y-auto pr-2",  // ← This makes it scrollable
-                                style: "--scrollbar-width: 8px;",
-                                SummaryTable { 
-                                    summary: calc.summary.clone(), 
-                                    new_prefix: calc.new_prefix, 
-                                    subnets: calc.subnets.clone() 
-                                }
+                            SummaryTable { 
+                                summary: calc.summary.clone(), 
+                                new_prefix: calc.new_prefix, 
+                                subnets: calc.subnets.clone() 
                             }
 
                         }
@@ -95,7 +90,6 @@ fn ErrorMessage(err: Ipv4InputError) -> Element {
 
 #[component]
 fn SummaryTable(summary: SubnetResult, new_prefix: Option<u8>, subnets: Vec<SubnetResult>) -> Element {
-    let condition = new_prefix.is_some() || subnets.len() > 1;
     let is_subnetted = new_prefix.is_some() || subnets.len() > 1;
 
     // Use the first new subnet's details if subnetted; otherwise use the original summary
@@ -111,72 +105,76 @@ fn SummaryTable(summary: SubnetResult, new_prefix: Option<u8>, subnets: Vec<Subn
     let base_prefix = summary.network.prefix_len();
 
     rsx! {
-        table { class: "w-full text-sm text-left border-collapse",
-            tbody {
-                tr { class: "border-b dark:border-gray-700",
-                    th { class: "px-4 py-3 font-medium text-gray-700 dark:text-gray-300", 
-                        span {"Network ID" }
-                    }
-                    td { class: "px-4 py-3 font-mono", 
-                        span { "{display.network.network()}/{display.network.prefix_len()}"}
-                    }
-                }
-                tr {class: "border-b dark:border-gray-700",
-                    th { class: "px-4 py-3 font-medium text-gray-700 dark:text-gray-300", 
-                        span {"Netmask" }
-                    }
-                    td { class: "px-4 py-3 font-mono", 
-                        span { "{display.netmask}"}
-                    } 
-                }
-                tr {class: "border-b dark:border-gray-700",
-                    th { class: "px-4 py-3 font-medium text-gray-700 dark:text-gray-300", 
-                        span {"Wildcard Mask" }
-                    }
-                    td { class: "px-4 py-3 font-mono", 
-                        span{"{display.wildcard}"}
-                    }
-                }
-               
-                tr {class: "border-b dark:border-gray-700",
-                    th { class: "px-4 py-3 font-medium text-gray-700 dark:text-gray-300", 
-                        span {"First Host" }
-                    }
-                    td { class: "px-4 py-3 font-mono", 
-                        span {"{display.first_host.clone().unwrap_or(\"-\".into())}"}
-                    }
-                }
-                tr {class: "border-b dark:border-gray-700",
-                    th { class: "px-4 py-3 font-medium text-gray-700 dark:text-gray-300", 
-                        span {"Last Host" }
-                    }
-                    td { class: "px-4 py-3 font-mono", 
-                        span {"{display.last_host.clone().unwrap_or(\"-\".into())}"}
-                    }
-                }
-                tr {class: "border-b dark:border-gray-700",
-                    th { class: "px-4 py-3 font-medium text-gray-700 dark:text-gray-300", 
-                        span {"Broadcast" }
-                    }
-                    td { class: "px-4 py-3 font-mono", 
-                        span {"{display.broadcast}"}
-                    }
-                }
-                tr {class: "border-b dark:border-gray-700",
-                    th { class: "px-4 py-3 font-medium text-gray-700 dark:text-gray-300", 
-                        span {"Usable Hosts" }
-                    }
-                    td { class: "px-4 py-3", 
-                        span {"{display.usable_hosts}"}
-                    }
-                }
-                if is_subnetted {
+        div {
+            class: "h-90 overflow-y-auto pr-2",  // ← This makes it scrollable
+            style: "--scrollbar-width: 8px;",
+            table { class: "w-full text-sm text-left border-collapse",
+                tbody {
                     tr { class: "border-b dark:border-gray-700",
                         th { class: "px-4 py-3 font-medium text-gray-700 dark:text-gray-300", 
-                            span {"New Prefix" }
+                            span {"Network ID" }
                         }
                         td { class: "px-4 py-3 font-mono", 
-                            span {"/{base_prefix} → /{new_prefix.unwrap()}"}
+                            span { "{display.network.network()}/{display.network.prefix_len()}"}
+                        }
+                    }
+                    tr {class: "border-b dark:border-gray-700",
+                        th { class: "px-4 py-3 font-medium text-gray-700 dark:text-gray-300", 
+                            span {"Netmask" }
+                        }
+                        td { class: "px-4 py-3 font-mono", 
+                            span { "{display.netmask}"}
+                        } 
+                    }
+                    tr {class: "border-b dark:border-gray-700",
+                        th { class: "px-4 py-3 font-medium text-gray-700 dark:text-gray-300", 
+                            span {"Wildcard Mask" }
+                        }
+                        td { class: "px-4 py-3 font-mono", 
+                            span{"{display.wildcard}"}
+                        }
+                    }
+                
+                    tr {class: "border-b dark:border-gray-700",
+                        th { class: "px-4 py-3 font-medium text-gray-700 dark:text-gray-300", 
+                            span {"First Host" }
+                        }
+                        td { class: "px-4 py-3 font-mono", 
+                            span {"{display.first_host.clone().unwrap_or(\"-\".into())}"}
+                        }
+                    }
+                    tr {class: "border-b dark:border-gray-700",
+                        th { class: "px-4 py-3 font-medium text-gray-700 dark:text-gray-300", 
+                            span {"Last Host" }
+                        }
+                        td { class: "px-4 py-3 font-mono", 
+                            span {"{display.last_host.clone().unwrap_or(\"-\".into())}"}
+                        }
+                    }
+                    tr {class: "border-b dark:border-gray-700",
+                        th { class: "px-4 py-3 font-medium text-gray-700 dark:text-gray-300", 
+                            span {"Broadcast" }
+                        }
+                        td { class: "px-4 py-3 font-mono", 
+                            span {"{display.broadcast}"}
+                        }
+                    }
+                    tr {class: "border-b dark:border-gray-700",
+                        th { class: "px-4 py-3 font-medium text-gray-700 dark:text-gray-300", 
+                            span {"Usable Hosts" }
+                        }
+                        td { class: "px-4 py-3", 
+                            span {"{display.usable_hosts}"}
+                        }
+                    }
+                    if is_subnetted {
+                        tr { class: "border-b dark:border-gray-700",
+                            th { class: "px-4 py-3 font-medium text-gray-700 dark:text-gray-300", 
+                                span {"New Prefix" }
+                            }
+                            td { class: "px-4 py-3 font-mono", 
+                                span {"/{base_prefix} → /{new_prefix.unwrap()}"}
+                            }
                         }
                     }
                 }
@@ -194,36 +192,28 @@ fn SubnetTable(subnets:Vec<crate::ipv4::types::SubnetResult>, base_prefix: u8) -
                 table { class: "w-full text-sm text-left",
                     thead { class: "bg-gray-100 dark:bg-gray-700",
                         tr {
-                            th { class: "px-4 py-3", 
-                                span {"Subnet" }
-                            }
-                            th { class: "px-4 py-3", 
-                                span {"Range" }
-                            }
-                            th { class: "px-4 py-3", 
-                                span {"Broadcast" }
-                            }
+                            th { class: "px-4 py-3", span {"ID" }}
+                            th { class: "px-4 py-3", span {"Subnet" }}
+                            th { class: "px-4 py-3", span {"Range" }}
+                            th { class: "px-4 py-3", span {"Broadcast" }}
                         }
                     }
                     tbody {
                         for (i , sub) in subnets.iter().enumerate() {
                             tr { class: "border-t dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50",
-                                td { class: "px-4 py-3 font-mono", 
-                                    span {"{sub.network}" }
-                                }
+                                td { class: "px-4 py-3 font-mono", span {"{i + 1}"}}
+                                td { class: "px-4 py-3 font-mono", span {"{sub.network}" }}
                                 td { class: "px-4 py-3 font-mono",
                                     span {"{sub.first_host.as_deref().unwrap_or(\"-\")} → {sub.last_host.as_deref().unwrap_or(\"-\")}"}
                                 }
-                                td { class: "px-4 py-3 font-mono", 
-                                    span {"{sub.broadcast}" }
-                                }
+                                td { class: "px-4 py-3 font-mono", span {"{sub.broadcast}" }}
                             }
                         }
                     }
                 }
             }
-            if subnets.len() >= 64 {
-                p { class: "mt-4 text-center text-gray-500", "Showing first 64 subnets (too many to list all)" }
+            if subnets.len() >= 10000 {
+                p { class: "mt-4 text-center text-gray-500", "Showing first 10000 subnets (too many to list all)" }
             }
         }
     }

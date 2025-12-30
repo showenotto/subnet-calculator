@@ -1,12 +1,9 @@
-use ipnet::{AddrParseError, Ipv4Net, Ipv4Subnets};
+use ipnet::{Ipv4Net};
 use std::net::Ipv4Addr;
 
 use crate::ipv4::types::{CalculationResult, Ipv4InputError, SubnetResult};
 
-
-
 pub fn parse_network(ip: &str, mask_or_prefix: &str) -> Result<Ipv4Net, Ipv4InputError> {
-    //let ip: Ipv4Addr = ip.trim().parse().map_err(|e:AddrParseError| Ipv4InputError::ParseError(e.to_string()))?;
     let ip: Ipv4Addr = ip.trim()
     .parse()
     .map_err(|e: std::net::AddrParseError| Ipv4InputError::ParseError(e.to_string()))?;
@@ -63,7 +60,6 @@ pub fn calculate(
         // Find smallest prefix that gives at least 'hosts' usable
         let required = hosts + 2; // include network + broadcast
         let new_prefix = 32 - (required.next_power_of_two().trailing_zeros());
-        //let new_prefix = new_prefix.max(base_network.prefix_len().into());
 
 
         let available_usable = if 2u32.pow(32 - base_network.prefix_len() as u32) >= 2 {
@@ -89,11 +85,10 @@ pub fn calculate(
         (Some(new_prefix), Box::new(base_network.subnets(new_prefix).unwrap()))
     } else {
         // Basic mode
-        //(None, Box::new(std::iter::once(base_network)))
         (None, Box::new(base_network.subnets(base_network.prefix_len()).unwrap()))
     };
 
-    for net in subnet_iter.take(64) {  // Limit to prevent huge lists
+    for net in subnet_iter.take(10000) {  // Limit to prevent huge lists
         subnets.push(build_subnet_result(net));
     }
 

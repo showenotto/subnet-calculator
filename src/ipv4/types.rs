@@ -18,6 +18,13 @@ pub struct SubnetResult {
     pub usable_hosts: u32,
 }
 
+#[derive(Clone, PartialEq)]
+pub enum SubnetMode {
+    ByHosts,
+    BySubnets,
+    Inspect,
+}
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct CalculationResult {
     pub base_network: Ipv4Net,
