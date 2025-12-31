@@ -1,6 +1,12 @@
-@import "tailwindcss";
-@source "./src/**/*.{rs,html,css}";
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto:wght@400;500;700&display=swap");
 
+@import "tailwindcss";
+
+@theme {
+  /* 2. Map the fonts to Tailwind variables */
+  --font-inter: "Inter", ui-sans-serif, system-ui;
+  --font-roboto: "Roboto", sans-serif;
+}
 
 @layer utilities {
   /* Make the spinner container taller/wider for bigger arrows */

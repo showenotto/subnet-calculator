@@ -1,6 +1,6 @@
 // src/app.rs
 use dioxus::prelude::*;
-use crate::{components::{ActiveTab, Footer, Header, Tabs}, ipv4::Ipv4Tab};
+use crate::{components::{ActiveTab, Footer, Header, Tabs}, ipv4::Ipv4Tab, ipv6::Ipv6Tab};
 
 #[derive(Props, Clone, PartialEq)]
 struct PlaceholderProps {
@@ -33,7 +33,7 @@ pub fn App() -> Element {
                 div { class: if *active_tab.read() == ActiveTab::Ipv6 { "" } else { "hidden" },
                     div { class: "text-center py-16",
                         h2 { class: "text-4xl font-bold text-gray-500 dark:text-gray-400",
-                            "IPv6 module coming soon..."
+                            Ipv6Tab {}
                         }
                     }
                 }

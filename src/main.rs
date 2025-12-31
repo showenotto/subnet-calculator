@@ -3,6 +3,7 @@ mod app;
 mod components;
 mod theme;
 mod ipv4;
+mod ipv6;
 
 use dioxus::prelude::*;
 use app::App;

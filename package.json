@@ -10,6 +10,8 @@
   "version": "1.0.0",
   "main": "index.js",
   "dependencies": {
+    "@fontsource/inter": "^5.2.8",
+    "@fontsource/roboto": "^5.2.9",
     "baseline-browser-mapping": "^2.9.11",
     "braces": "^3.0.3",
     "browserslist": "^4.28.1",

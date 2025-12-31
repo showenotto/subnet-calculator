@@ -5,9 +5,9 @@ use crate::ipv4::{calculator::{LAST_N, LIMIT}, types::{CalculationResult, Ipv4In
 
 fn get_tab_class(is_active: bool) -> &'static str {
     if is_active {
-        "px-6 py-3 font-medium border-b-2 border-blue-600 text-blue-600 dark:text-blue-400"
+        "px-6 py-3 font-medium font-roboto border-b-2 border-blue-600 text-blue-600 dark:text-blue-400"
     } else {
-        "px-6 py-3 font-medium border-b-2 border-transparent text-white-600 hover:text-gray-400 dark:hover:text-gray-400"
+        "px-6 py-3 font-medium font-roboto border-b-2 border-transparent text-white-600 hover:text-gray-400 dark:hover:text-gray-400"
     }
 }
 
@@ -17,7 +17,7 @@ pub fn ResultsPanel(result: Option<Result<CalculationResult, Ipv4InputError>>) -
 
     rsx! {
         div { class: "h-150 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 overflow-auto",
-            h2 { class: "text-2xl font-bold mb-8 text-center", "Results" }
+            h2 { class: "text-2xl font-bold font-roboto mb-8 text-center", "Results" }
 
             match result {
                 None => rsx! { PlaceholderMessage {} },
@@ -82,7 +82,7 @@ fn ErrorMessage(err: Ipv4InputError) -> Element {
         Ipv4InputError::InvalidPrefix => "Invalid prefix length".to_string(),
     };
     rsx! {
-        div { class: "bg-red-100 dark:bg-red-900/40 border border-red-500 text-red-700 dark:text-red-300 p-6 rounded-lg",
+        div { class: "bg-red-100 dark:bg-red-900/40 border font-roboto border-red-500 text-red-700 dark:text-red-300 p-6 rounded-lg",
             strong { "Error: " } "{msg}"
         }
     }
@@ -106,73 +106,73 @@ fn SummaryTable(summary: SubnetResult, new_prefix: Option<u8>, subnets: Vec<Subn
 
     rsx! {
         div {
-            class: "h-90 overflow-y-auto pr-2",  // ← This makes it scrollable
+            class: "h-90 overflow-y-auto pr-2 ",  // ← This makes it scrollable
             style: "--scrollbar-width: 8px;",
             table { class: "w-full text-sm text-left border-collapse",
                 tbody {
                     tr { class: "border-b dark:border-gray-700",
-                        th { class: "px-4 py-3 font-medium text-gray-700 dark:text-gray-300", 
+                        th { class: "px-4 py-3 font-medium font-roboto text-gray-700 dark:text-gray-300", 
                             span {"Network ID" }
                         }
-                        td { class: "px-4 py-3 font-mono", 
+                        td { class: "px-4 py-3 font-roboto ", 
                             span { "{display.network.network()}/{display.network.prefix_len()}"}
                         }
                     }
                     tr {class: "border-b dark:border-gray-700",
-                        th { class: "px-4 py-3 font-medium text-gray-700 dark:text-gray-300", 
+                        th { class: "px-4 py-3 font-medium font-roboto text-gray-700 dark:text-gray-300", 
                             span {"Netmask" }
                         }
-                        td { class: "px-4 py-3 font-mono", 
+                        td { class: "px-4 py-3 font-roboto ", 
                             span { "{display.netmask}"}
                         } 
                     }
                     tr {class: "border-b dark:border-gray-700",
-                        th { class: "px-4 py-3 font-medium text-gray-700 dark:text-gray-300", 
+                        th { class: "px-4 py-3 font-medium font-roboto text-gray-700 dark:text-gray-300", 
                             span {"Wildcard Mask" }
                         }
-                        td { class: "px-4 py-3 font-mono", 
+                        td { class: "px-4 py-3 font-roboto ", 
                             span{"{display.wildcard}"}
                         }
                     }
                 
                     tr {class: "border-b dark:border-gray-700",
-                        th { class: "px-4 py-3 font-medium text-gray-700 dark:text-gray-300", 
+                        th { class: "px-4 py-3 font-medium font-roboto text-gray-700 dark:text-gray-300", 
                             span {"First Host" }
                         }
-                        td { class: "px-4 py-3 font-mono", 
+                        td { class: "px-4 py-3 font-roboto ", 
                             span {"{display.first_host.clone().unwrap_or(\"-\".into())}"}
                         }
                     }
                     tr {class: "border-b dark:border-gray-700",
-                        th { class: "px-4 py-3 font-medium text-gray-700 dark:text-gray-300", 
+                        th { class: "px-4 py-3 font-medium font-roboto text-gray-700 dark:text-gray-300", 
                             span {"Last Host" }
                         }
-                        td { class: "px-4 py-3 font-mono", 
+                        td { class: "px-4 py-3 font-roboto ", 
                             span {"{display.last_host.clone().unwrap_or(\"-\".into())}"}
                         }
                     }
                     tr {class: "border-b dark:border-gray-700",
-                        th { class: "px-4 py-3 font-medium text-gray-700 dark:text-gray-300", 
+                        th { class: "px-4 py-3 font-medium font-roboto text-gray-700 dark:text-gray-300", 
                             span {"Broadcast" }
                         }
-                        td { class: "px-4 py-3 font-mono", 
+                        td { class: "px-4 py-3 font-roboto ", 
                             span {"{display.broadcast}"}
                         }
                     }
                     tr {class: "border-b dark:border-gray-700",
-                        th { class: "px-4 py-3 font-medium text-gray-700 dark:text-gray-300", 
+                        th { class: "px-4 py-3 font-medium font-roboto text-gray-700 dark:text-gray-300", 
                             span {"Usable Hosts" }
                         }
-                        td { class: "px-4 py-3", 
+                        td { class: "px-4 py-3 font-roboto ", 
                             span {"{display.usable_hosts}"}
                         }
                     }
                     if is_subnetted {
                         tr { class: "border-b dark:border-gray-700",
-                            th { class: "px-4 py-3 font-medium text-gray-700 dark:text-gray-300", 
+                            th { class: "px-4 py-3 font-medium font-roboto text-gray-700 dark:text-gray-300", 
                                 span {"New Prefix" }
                             }
-                            td { class: "px-4 py-3 font-mono", 
+                            td { class: "px-4 py-3 font-roboto ", 
                                 span {"/{base_prefix} → /{new_prefix.unwrap()}"}
                             }
                         }
@@ -191,7 +191,7 @@ fn SubnetTable(subnets:Vec<crate::ipv4::types::SubnetResult>, base_prefix: u8, t
     rsx! {
         div { class: "mt-12 h-80",
             div { class: "overflow-x-auto",
-                table { class: "w-full text-sm text-left",
+                table { class: "w-full text-sm font-roboto text-left",
                     thead { class: "bg-gray-100 dark:bg-gray-700",
                         tr {
                             th { class: "px-4 py-3 w-24", span {"ID" }}
@@ -228,12 +228,12 @@ fn SubnetTable(subnets:Vec<crate::ipv4::types::SubnetResult>, base_prefix: u8, t
                                 } else {
                                     rsx! {
                                         tr { class: "border-t dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50",
-                                            td { class: "px-4 py-3 font-mono", span { "{id}" } }
-                                            td { class: "px-4 py-3 font-mono", span { "{sub.network}" } }
-                                            td { class: "px-4 py-3 font-mono",
+                                            td { class: "px-4 py-3 ", span { "{id}" } }
+                                            td { class: "px-4 py-3 ", span { "{sub.network}" } }
+                                            td { class: "px-4 py-3 ",
                                                 span { "{sub.first_host.as_deref().unwrap_or(\"-\")} → {sub.last_host.as_deref().unwrap_or(\"-\")}" }
                                             }
-                                            td { class: "px-4 py-3 font-mono", span { "{sub.broadcast}" } }
+                                            td { class: "px-4 py-3", span { "{sub.broadcast}" } }
                                         }
                                     }
                                 }

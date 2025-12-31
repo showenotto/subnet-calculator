@@ -2,7 +2,7 @@ use ipnet::{Ipv4Net};
 use std::net::Ipv4Addr;
 use crate::ipv4::types::{CalculationResult, Ipv4InputError, SubnetResult};
 
-pub const LIMIT: usize = 8192;  // Maximum number of subnets to process/display
+pub const LIMIT: usize = 4096;  // Maximum number of subnets to process/display
 pub const LAST_N: usize = 10;    // Always show the last N subnets when truncated
 
 pub fn parse_network(ip: &str, mask_or_prefix: &str) -> Result<Ipv4Net, Ipv4InputError> {
@@ -90,9 +90,6 @@ pub fn calculate(
         (None, Box::new(base_network.subnets(base_network.prefix_len()).unwrap()))
     };
 
-    //for net in subnet_iter.take(10000) {  // Limit to prevent huge lists
-    //    subnets.push(build_subnet_result(net));
-    //}
     // Calculate total number of subnets that would be created
     let total_subnets: u64 = if let Some(np) = new_prefix {
         // For subnetting: 2^(new_prefix - base_prefix)
