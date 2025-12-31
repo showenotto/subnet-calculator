@@ -31,6 +31,7 @@ pub struct CalculationResult {
     pub summary: SubnetResult,
     pub subnets: Vec<SubnetResult>,  // Empty if no splitting
     pub new_prefix: Option<u8>,     // Only when splitting
+    pub total_subnets: u64,
 }
 
 pub const CIDR_OPTIONS: &[(u8, &str, &str)] = &[

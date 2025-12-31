@@ -1,7 +1,9 @@
 use ipnet::{Ipv4Net};
 use std::net::Ipv4Addr;
-
 use crate::ipv4::types::{CalculationResult, Ipv4InputError, SubnetResult};
+
+pub const LIMIT: usize = 8192;  // Maximum number of subnets to process/display
+pub const LAST_N: usize = 10;    // Always show the last N subnets when truncated
 
 pub fn parse_network(ip: &str, mask_or_prefix: &str) -> Result<Ipv4Net, Ipv4InputError> {
     let ip: Ipv4Addr = ip.trim()
@@ -27,12 +29,12 @@ pub fn parse_network(ip: &str, mask_or_prefix: &str) -> Result<Ipv4Net, Ipv4Inpu
 }
 
 fn build_subnet_result(net: Ipv4Net) -> SubnetResult {
+
+    let total = 2u32.pow(32 - net.prefix_len() as u32);
     let hosts = net.hosts();
     let mut iter = hosts;
     let first = iter.next().map(|h| h.to_string());
     let last = iter.last().map(|h| h.to_string());
-
-    let total = 2u32.pow(32 - net.prefix_len() as u32);
     let usable = if total >= 2 { total - 2 } else { 0 };
 
     SubnetResult {
@@ -88,14 +90,60 @@ pub fn calculate(
         (None, Box::new(base_network.subnets(base_network.prefix_len()).unwrap()))
     };
 
-    for net in subnet_iter.take(10000) {  // Limit to prevent huge lists
-        subnets.push(build_subnet_result(net));
-    }
+    //for net in subnet_iter.take(10000) {  // Limit to prevent huge lists
+    //    subnets.push(build_subnet_result(net));
+    //}
+    // Calculate total number of subnets that would be created
+    let total_subnets: u64 = if let Some(np) = new_prefix {
+        // For subnetting: 2^(new_prefix - base_prefix)
+        1u64 << (np - base_network.prefix_len()) as u32
+    } else {
+        // For inspect: just 1 (the base network itself)
+        1
+    };
 
+    // Handle subnet collection based on total count
+    let mut iter = subnet_iter;
+
+    if (total_subnets as usize) <= LIMIT {
+        // Total subnets fit within our limit - show all of them
+        for net in iter.by_ref().take(LIMIT) {
+            subnets.push(build_subnet_result(net));
+        }
+    } else {
+        // Too many subnets - show first (LIMIT - LAST_N) + last LAST_N subnets
+        let first_k = LIMIT - LAST_N;
+
+        // Collect first chunk of subnets
+        for _ in 0..first_k {
+            if let Some(net) = iter.next() {
+                subnets.push(build_subnet_result(net));
+            }
+        }
+
+        // Skip to the end and collect last chunk
+        // Calculate subnet size in addresses
+        let subnet_size: u64 = 1 << (32 - new_prefix.unwrap() as u32);
+        
+        // Calculate offset to reach the last subnets
+        for k in 0..LAST_N {
+            // ID of this subnet in the total sequence (1-based)
+            let n = total_subnets - (LAST_N as u64 - 1) + k as u64;
+            // Offset from base network to this subnet
+            let offset = (n - 1) * subnet_size;
+            // Calculate starting IP of this subnet
+            let start_u64 = u32::from(base_network.network()) as u64 + offset;
+            let start = Ipv4Addr::from((start_u64 as u32));
+            // Create the network
+            let net = Ipv4Net::new(start, new_prefix.unwrap()).unwrap();
+            subnets.push(build_subnet_result(net));
+        }
+    }
     Ok(CalculationResult {
         base_network,
         summary: build_subnet_result(base_network),
         subnets,
         new_prefix,
+        total_subnets: total_subnets
     })
 }
