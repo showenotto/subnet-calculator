@@ -20,7 +20,7 @@ pub fn App() -> Element {
                 active_tab: *active_tab.read(),
                 on_tab_change: move |tab| active_tab.set(tab)
             }
-            main { class: "flex-1 mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full",
+            main { class: "flex-1 mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full font-roboto",
                 // IPv4 Tab Content
                 div { class: if *active_tab.read() == ActiveTab::Ipv4 { "" } else { "hidden" },
                     div { class: "text-center py-1",
@@ -31,17 +31,16 @@ pub fn App() -> Element {
 
                 // IPv6 Tab Content
                 div { class: if *active_tab.read() == ActiveTab::Ipv6 { "" } else { "hidden" },
-                    div { class: "text-center py-16",
-                        h2 { class: "text-4xl font-bold text-gray-500 dark:text-gray-400",
-                            Ipv6Tab {}
-                        }
+                    div { class: "text-center py-1",
+                        h2 { class: "text-4xl font-bold mb-4", "IPv6 Subnet Calculator"}
+                        Ipv6Tab {}
                     }
                 }
 
                 // Converter Tab Content
                 div { class: if *active_tab.read() == ActiveTab::Converter { "" } else { "hidden" },
                     div { class: "text-center py-16",
-                        h2 { class: "text-4xl font-bold text-gray-500 dark:text-gray-400",
+                        h2 { class: "text-4xl font-bold text-gray-400",
                             "Converter module coming soon..."
                         }
                     }

@@ -41,7 +41,7 @@ pub fn ResultsPanel(result: Option<Result<CalculationResult, Ipv4InputError>>) -
                                 button {
                                     class: "{subnets_tab_class} transition-colors",
                                     onclick: move |_| active_tab.set(1),
-                                    "Resulting Subnets ({calc.subnets.len()})"
+                                    "Subnets ({calc.total_subnets})"
                                 }
                             }
                         }
@@ -68,11 +68,12 @@ pub fn ResultsPanel(result: Option<Result<CalculationResult, Ipv4InputError>>) -
 #[component]
 fn PlaceholderMessage() -> Element {
     rsx! {
-        p { class: "text-center text-gray-500 dark:text-gray-400 py-20 text-lg",
-            "Enter Network Information and click Calculate"
+        p { class: "text-center text-gray-500 text-base py-20",
+            "Enter details and calculate"
         }
     }
 }
+
 
 #[component]
 fn ErrorMessage(err: Ipv4InputError) -> Element {
@@ -103,70 +104,18 @@ fn SummaryTable(summary: SubnetResult, new_prefix: Option<u8>, subnets: Vec<Subn
     };
 
     let base_prefix = summary.network.prefix_len();
-
     rsx! {
         div {
-            class: "h-90 overflow-y-auto pr-2 ",  // ← This makes it scrollable
-            style: "--scrollbar-width: 8px;",
+            class: "overflow-y-auto pr-2 ",  // ← This makes it scrollable
             table { class: "w-full text-sm text-left border-collapse",
                 tbody {
-                    tr { class: "border-b dark:border-gray-700",
-                        th { class: "px-4 py-3 font-medium font-roboto text-gray-700 dark:text-gray-300", 
-                            span {"Network ID" }
-                        }
-                        td { class: "px-4 py-3 font-roboto ", 
-                            span { "{display.network.network()}/{display.network.prefix_len()}"}
-                        }
-                    }
-                    tr {class: "border-b dark:border-gray-700",
-                        th { class: "px-4 py-3 font-medium font-roboto text-gray-700 dark:text-gray-300", 
-                            span {"Netmask" }
-                        }
-                        td { class: "px-4 py-3 font-roboto ", 
-                            span { "{display.netmask}"}
-                        } 
-                    }
-                    tr {class: "border-b dark:border-gray-700",
-                        th { class: "px-4 py-3 font-medium font-roboto text-gray-700 dark:text-gray-300", 
-                            span {"Wildcard Mask" }
-                        }
-                        td { class: "px-4 py-3 font-roboto ", 
-                            span{"{display.wildcard}"}
-                        }
-                    }
-                
-                    tr {class: "border-b dark:border-gray-700",
-                        th { class: "px-4 py-3 font-medium font-roboto text-gray-700 dark:text-gray-300", 
-                            span {"First Host" }
-                        }
-                        td { class: "px-4 py-3 font-roboto ", 
-                            span {"{display.first_host.clone().unwrap_or(\"-\".into())}"}
-                        }
-                    }
-                    tr {class: "border-b dark:border-gray-700",
-                        th { class: "px-4 py-3 font-medium font-roboto text-gray-700 dark:text-gray-300", 
-                            span {"Last Host" }
-                        }
-                        td { class: "px-4 py-3 font-roboto ", 
-                            span {"{display.last_host.clone().unwrap_or(\"-\".into())}"}
-                        }
-                    }
-                    tr {class: "border-b dark:border-gray-700",
-                        th { class: "px-4 py-3 font-medium font-roboto text-gray-700 dark:text-gray-300", 
-                            span {"Broadcast" }
-                        }
-                        td { class: "px-4 py-3 font-roboto ", 
-                            span {"{display.broadcast}"}
-                        }
-                    }
-                    tr {class: "border-b dark:border-gray-700",
-                        th { class: "px-4 py-3 font-medium font-roboto text-gray-700 dark:text-gray-300", 
-                            span {"Usable Hosts" }
-                        }
-                        td { class: "px-4 py-3 font-roboto ", 
-                            span {"{display.usable_hosts}"}
-                        }
-                    }
+                    SummaryRow { label: "Network ID", value: "{display.network.network()}/{display.network.prefix_len()}"}
+                    SummaryRow { label: "Netmask", value: display.netmask }
+                    SummaryRow { label: "Wildcard Mask", value: display.wildcard}
+                    SummaryRow { label: "First Host", value: display.first_host.clone().unwrap_or("-".into()) }
+                    SummaryRow { label: "Last Host", value: display.last_host.clone().unwrap_or("-".into()) }
+                    SummaryRow { label: "Broadcast", value: display.broadcast }
+                    SummaryRow { label: "Usable Hosts", value: display.usable_hosts }
                     if is_subnetted {
                         tr { class: "border-b dark:border-gray-700",
                             th { class: "px-4 py-3 font-medium font-roboto text-gray-700 dark:text-gray-300", 
@@ -183,6 +132,15 @@ fn SummaryTable(summary: SubnetResult, new_prefix: Option<u8>, subnets: Vec<Subn
     }
 }
 
+#[component]
+fn SummaryRow(label: &'static str, value: String) -> Element {
+    rsx! {
+        tr { class: "border-b dark:border-gray-700",
+            th { class: "px-4 py-3 font-medium text-gray-700 dark:text-gray-300 w-1/3", span {"{label}"} }
+            td { class: "px-4 py-3 break-all", span {"{value}" }}
+        }
+    }
+}
 
 #[component]
 fn SubnetTable(subnets:Vec<crate::ipv4::types::SubnetResult>, base_prefix: u8, total_subnets: u64) -> Element {

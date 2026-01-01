@@ -60,7 +60,8 @@ fn collect_subnets(mut iter: Ipv6Subnets, total: u128, subnet_prefix: u8, base_n
         let base_u128 = u128::from(base_network.network());
 
         for k in 0..LAST_N {
-            let n = total - (LAST_N as u128 - k as u128);  // index of the k-th last subnet (1-based)
+            //let n = total - (LAST_N as u128 - k as u128);  // index of the k-th last subnet (1-based)
+            let n = total - (LAST_N as u128 - k as u128 - 1);
             let offset = (n - 1) * subnet_size;
             let start = Ipv6Addr::from(base_u128 + offset);
             let net = Ipv6Net::new(start, subnet_prefix).unwrap();
@@ -126,6 +127,7 @@ pub fn calculate(
             new_prefix = None;
             total_subnets = 1;
             // subnets remains empty
+            subnets.push(build_subnet_result(base_network));
         }
 
         SubnetMode::BySubnets => {
@@ -207,7 +209,12 @@ pub fn calculate(
 
                 return Ok(CalculationResult {
                     base_network,
-                    summary: build_subnet_result(base_network),
+                    //summary: build_subnet_result(base_network),
+                    summary: if new_prefix.is_some() {
+                        subnets.first().cloned().unwrap_or(build_subnet_result(base_network))
+                    } else {
+                        build_subnet_result(base_network)
+                    },
                     subnets,
                     new_prefix,
                     total_subnets,
@@ -222,7 +229,12 @@ pub fn calculate(
 
     Ok(CalculationResult {
         base_network,
-        summary: build_subnet_result(base_network),
+        //summary: build_subnet_result(base_network),
+        summary: if new_prefix.is_some() {
+            subnets.first().cloned().unwrap_or(build_subnet_result(base_network))
+        } else {
+            build_subnet_result(base_network)
+        },
         subnets,
         new_prefix,
         total_subnets,

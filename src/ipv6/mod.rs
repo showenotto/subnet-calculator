@@ -21,25 +21,6 @@ pub fn Ipv6Tab() -> Element {
     let mut hierarchy_levels = use_signal(|| vec![] as Vec<HierarchyLevel>); // For ByHierarchy
     let mut result = use_signal(|| None::<Result<CalculationResult, Ipv6InputError>>);
 
-    // Live calculation with 300ms debounce on input changes
-    use_effect(move || {
-        let addr = addr_input.read().clone();
-        let prefix = prefix_input.read().clone();
-        let count_str = count_input.read().clone();
-        let child_prefix_str = child_prefix_input.read().clone();
-        let levels = hierarchy_levels.read().clone();
-
-        let needed_subnets = if *mode.read() == SubnetMode::BySubnets {
-            count_str.parse().ok()
-        } else { None };
-        let child_prefix = if *mode.read() == SubnetMode::ByPrefix {
-            child_prefix_str.parse().ok()
-        } else { None };
-
-        let res = calculate(&addr, &prefix, *mode.read(), needed_subnets, child_prefix, levels);
-        result.set(Some(res));
-    });
-
     rsx! {
         div { class: "grid grid-cols-3 gap-8",
             InputPanel {
