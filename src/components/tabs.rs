@@ -36,7 +36,7 @@ pub fn Tabs(active_tab: ActiveTab, on_tab_change: EventHandler<ActiveTab>) -> El
 fn TabButton(label: &'static str, active: bool, onclick: EventHandler<MouseEvent>) -> Element {
     let base = "px-6 py-3 font-medium transition-colors rounded-t-lg";
     let active_class = if active {
-        "border-b-4 border-blue-500 text-blue-600 dark:text-blue-400 bg-white dark:bg-gray-900 shadow-sm"
+        "border-b-4 border-blue-500 text-blue-600 dark:text-blue-400  dark:bg-gray-900 shadow-sm"
     } else {
         "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800"
     };

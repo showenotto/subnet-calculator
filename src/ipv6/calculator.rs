@@ -119,8 +119,11 @@ pub fn calculate(
     let base_prefix = base_network.prefix_len();
 
     let mut subnets = vec![];
-    let mut new_prefix: Option<u8> = None;
-    let mut total_subnets: u128 = 0;
+    let new_prefix: Option<u8>;
+    let total_subnets: u128;
+
+    // New: Optional hierarchy result
+    let mut hierarchy: Option<HierarchyResult> = None;
 
     match mode {
         SubnetMode::Inspect => {
@@ -161,76 +164,83 @@ pub fn calculate(
                 total_subnets = 1;
                 // subnets remains empty
             } else {
-                let mut current_prefix = base_prefix;
-                let mut tree = vec![HierarchyNode {
+                // Fixed: Properly build nested hierarchy tree with correct prefixes
+                // Initialize root
+                let mut root = HierarchyNode {
                     prefix: base_network,
-                    label: "Root".to_string(),
+                    label: "Original Network".to_string(),
                     children: vec![],
-                }];
+                };
 
-                for level in &hierarchy_levels {
+                // Current set of parents to add children to (starts with root)
+                let mut current_parents: Vec<&mut HierarchyNode> = vec![&mut root];
+
+                let mut current_prefix = base_prefix;
+
+                for level in hierarchy_levels.iter() {
+                    // Calculate min bits needed
                     let bits_needed = (level.num as f64).log2().ceil() as u8;
                     if bits_needed > level.bits {
                         return Err(Ipv6InputError::InsufficientBits);
                     }
+
+                    // Update cumulative prefix for child subnets
                     current_prefix = current_prefix.checked_add(level.bits)
                         .ok_or(Ipv6InputError::InsufficientBits)?;
                     if current_prefix > 128 {
                         return Err(Ipv6InputError::InsufficientBits);
                     }
 
-                    let mut new_children = vec![];
-                    let parents = tree.last().unwrap().children.clone();
-                    for parent in parents {
+                    // Prepare next set of parents
+                    let mut new_parents = vec![];
+
+                    // For each current parent, generate and attach children
+                    for parent in current_parents {
+                        let mut children = vec![];
+
+                        // Generate subnets from parent's prefix at current_prefix length
                         if let Ok(iter) = parent.prefix.subnets(current_prefix) {
                             for (i, net) in iter.enumerate().take(level.num as usize) {
-                                new_children.push(HierarchyNode {
+                                children.push(HierarchyNode {
                                     prefix: net,
                                     label: format!("{} {}", level.name, i + 1),
                                     children: vec![],
                                 });
                             }
                         }
+
+                        // Attach to parent
+                        parent.children = children;
+
+                        // Add children as next parents (mutable refs)
+                        for child in parent.children.iter_mut() {
+                            new_parents.push(child);
+                        }
                     }
 
-                    tree.push(HierarchyNode {
-                        prefix: base_network,
-                        label: level.name.clone(),
-                        children: new_children,
-                    });
+                    // Update for next level
+                    current_parents = new_parents;
                 }
 
-                // Optional: remove artificial root node
-                let tree = if tree.len() > 1 { tree.split_off(1) } else { tree };
+                // Use root's children as the top-level tree (skip "Root")
+                //let tree = root.children;
+                let tree = vec![root];
+
+                hierarchy = Some(HierarchyResult {
+                    levels: hierarchy_levels.clone(),
+                    tree,
+                });
 
                 new_prefix = None;
                 total_subnets = 0;
                 subnets = vec![];
-
-                return Ok(CalculationResult {
-                    base_network,
-                    //summary: build_subnet_result(base_network),
-                    summary: if new_prefix.is_some() {
-                        subnets.first().cloned().unwrap_or(build_subnet_result(base_network))
-                    } else {
-                        build_subnet_result(base_network)
-                    },
-                    subnets,
-                    new_prefix,
-                    total_subnets,
-                    hierarchy: Some(HierarchyResult {
-                        levels: hierarchy_levels,
-                        tree,
-                    }),
-                });
             }
         }
     }
 
     Ok(CalculationResult {
         base_network,
-        //summary: build_subnet_result(base_network),
-        summary: if new_prefix.is_some() {
+        summary: if new_prefix.is_some() || hierarchy.is_some() {
             subnets.first().cloned().unwrap_or(build_subnet_result(base_network))
         } else {
             build_subnet_result(base_network)
@@ -238,6 +248,6 @@ pub fn calculate(
         subnets,
         new_prefix,
         total_subnets,
-        hierarchy: None,
+        hierarchy,
     })
 }

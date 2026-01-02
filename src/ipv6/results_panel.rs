@@ -1,22 +1,27 @@
 // src/ipv6/results_panel.rs
 use dioxus::prelude::*;
-use crate::ipv6::types::{CalculationResult, HierarchyNode, Ipv6InputError, SubnetResult};
+use crate::ipv6::types::{CalculationResult, HierarchyLevel, HierarchyNode, Ipv6InputError, SubnetResult};
 use crate::ipv6::calculator::{LAST_N, LIMIT};
 
 fn get_tab_class(is_active: bool) -> &'static str {
     if is_active {
-        "px-6 py-3 font-medium font-roboto border-b-2 border-blue-600 text-blue-600 dark:text-blue-400"
+        "px-6 py-3 font-medium font-roboto border-b-2 border-blue-600 text-blue-400"
     } else {
-        "px-6 py-3 font-medium font-roboto border-b-2 border-transparent text-white-600 hover:text-gray-400 dark:hover:text-gray-400"
+        "px-6 py-3 font-medium font-roboto border-b-2 border-transparent text-white-600 hover:text-gray-400"
     }
 }
 #[component]
-pub fn ResultsPanel(result: Option<Result<CalculationResult, Ipv6InputError>>) -> Element {
+pub fn ResultsPanel(result: Option<Result<CalculationResult, Ipv6InputError>>, hierarchy_levels: Signal<Vec<HierarchyLevel>>) -> Element {
     let mut active_tab = use_signal(|| 0); 
+      let total_usable_subnets = if !hierarchy_levels.read().is_empty() {
+        hierarchy_levels.read().iter().fold(1u128, |acc, l| acc * l.num as u128)
+    } else {
+        0
+    };
 
     rsx! {
         // Changed h-full to a fixed height or min-height to match IPv4 style if needed
-        div { class: "h-150 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 overflow-auto",
+        div { class: "h-150 bg-gray-800 rounded-lg shadow-lg p-6 overflow-auto",
             h2 { class: "text-xl font-bold mb-6 text-center", "Results" }
 
             match result {
@@ -29,7 +34,7 @@ pub fn ResultsPanel(result: Option<Result<CalculationResult, Ipv6InputError>>) -
                     let subnets_tab_class = get_tab_class(*active_tab.read() == 1);
 
                     rsx! {
-                        div { class: "flex grid grid-cols-2 border-b border-gray-300 dark:border-gray-600 mb-6",
+                        div { class: "flex grid grid-cols-2 border-b border-gray-600 mb-6",
                             button {
                                 class: "{summary_tab_class}",
                                 onclick: move |_| active_tab.set(0),
@@ -39,7 +44,7 @@ pub fn ResultsPanel(result: Option<Result<CalculationResult, Ipv6InputError>>) -
                                 button {
                                     class: "{subnets_tab_class}",
                                     onclick: move |_| active_tab.set(1),
-                                    if calc.hierarchy.is_some() { "Hierarchy Tree" } else { "Subnets ({calc.total_subnets})" }
+                                    if calc.hierarchy.is_some() { "Hierarchy Tree ({total_usable_subnets.to_string()})" } else { "Subnets ({calc.total_subnets})" }
                                 }
                             }
                         }
@@ -79,8 +84,8 @@ fn SummaryTable(summary: SubnetResult, new_prefix: Option<u8>, base_prefix: u8, 
                     SummaryRow { label: "First Host", value: summary.first_host }
                     SummaryRow { label: "Last Host", value: summary.last_host }
                     if is_subnetted {
-                        tr { class: "border-b dark:border-gray-700",
-                            th { class: "px-4 py-3 font-medium font-roboto text-gray-700 dark:text-gray-300",
+                        tr { class: "border-b border-gray-700",
+                            th { class: "px-4 py-3 font-medium font-roboto text-gray-300",
                                 span { "New Prefix" }
                             }
                             td { class: "px-4 py-3 font-roboto",
@@ -97,8 +102,8 @@ fn SummaryTable(summary: SubnetResult, new_prefix: Option<u8>, base_prefix: u8, 
 #[component]
 fn SummaryRow(label: &'static str, value: String) -> Element {
     rsx! {
-        tr { class: "border-b dark:border-gray-700",
-            th { class: "px-4 py-3 font-medium text-gray-700 dark:text-gray-300 w-1/3", span {"{label}"} }
+        tr { class: "border-b border-gray-700",
+            th { class: "px-4 py-3 font-medium text-gray-300 w-1/3", span {"{label}"} }
             td { class: "px-4 py-3 break-all", span {"{value}" }}
         }
     }
@@ -119,7 +124,7 @@ fn ErrorMessage(err: Ipv6InputError) -> Element {
         Ipv6InputError::InvalidPrefix => "Invalid prefix".to_string(),
         Ipv6InputError::InsufficientBits => "Insufficient bits for hierarchy".to_string(),
     };
-    rsx! { div { class: "bg-red-100 dark:bg-red-900/40 p-4 rounded text-sm text-red-700 dark:text-red-300", strong { "Error: " } "{msg}" } }
+    rsx! { div { class: "bg-red-900/40 p-4 rounded text-sm text-red-300", strong { "Error: " } "{msg}" } }
 }
 
 #[component]
@@ -131,7 +136,7 @@ fn SubnetTable(subnets: Vec<SubnetResult>, total_subnets: u128) -> Element {
         div { class: "mt-12h-80",
             div { class: "overflow-x-auto",
                 table { class: "w-full text-sm text-left",
-                    thead { class: "bg-gray-100 dark:bg-gray-700",
+                    thead { class: "bg-gray-700",
                         tr {
                             th { class: "px-4 py-2", "ID" }
                             th { class: "px-4 py-2", "Subnet" }
@@ -167,7 +172,7 @@ fn SubnetTable(subnets: Vec<SubnetResult>, total_subnets: u128) -> Element {
                                         }
                                     } else {
                                         rsx! {
-                                            tr { class: "border-t dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50",
+                                            tr { class: "border-t border-gray-700 hover:bg-gray-700/50",
                                                 td { class: "px-4 py-2 font-roboto", "{id}" }
                                                 td { class: "px-4 py-2 font-roboto", "{sub.network}" }
                                                 td { class: "px-4 py-2 font-roboto", "{sub.first_host} → {sub.last_host}" }
@@ -184,14 +189,37 @@ fn SubnetTable(subnets: Vec<SubnetResult>, total_subnets: u128) -> Element {
 }
 
 #[component]
+fn HierarchyNodeComponent(node: HierarchyNode) -> Element {
+    let mut expanded = use_signal(|| false);  // Local state for this node's expansion
+
+    rsx! {
+        li { class: "py-1",
+            span {
+                class: "cursor-pointer",
+                onclick: move |_| expanded.toggle(),
+                if !node.children.is_empty() {
+                    if expanded() { "- " } else { "+ " }
+                }
+                "{node.label}   →   {node.prefix}"
+            }
+            if expanded() && !node.children.is_empty() {
+                ul { class: "pl-12 border-l border-gray-600 ml-2",
+                    for child in node.children {
+                        HierarchyNodeComponent { node: child }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// Updated: Now renders the tree using the recursive HierarchyNodeComponent
+#[component]
 fn HierarchyTree(nodes: Vec<HierarchyNode>) -> Element {
     rsx! {
-        ul { class: "list-disc pl-6 text-sm",
+        ul { class: "list-none pl-0 text-base text-left",  // Left-aligned, no bullets
             for node in nodes {
-                li { class: "py-1", "{node.label}: {node.prefix}" }
-                if !node.children.is_empty() {
-                    HierarchyTree { nodes: node.children }
-                }
+                HierarchyNodeComponent { node }
             }
         }
     }

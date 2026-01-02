@@ -22,7 +22,7 @@ pub fn Ipv6Tab() -> Element {
     let mut result = use_signal(|| None::<Result<CalculationResult, Ipv6InputError>>);
 
     rsx! {
-        div { class: "grid grid-cols-3 gap-8",
+        div { class: "grid grid-cols-3 gap-4",
             InputPanel {
                 addr_input,
                 prefix_input,
@@ -33,7 +33,7 @@ pub fn Ipv6Tab() -> Element {
                 result
             }
             div { class: "col-span-2",
-                ResultsPanel { result: result.read().clone() }
+                ResultsPanel { result: result.read().clone(), hierarchy_levels}
             }
         }
     }

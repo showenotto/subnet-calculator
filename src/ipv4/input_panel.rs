@@ -30,14 +30,14 @@ pub fn InputPanel(
     };
 
     rsx! {
-        div { class: "w-full h-150 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 flex flex-col",
-            h2 { class: "text-2xl font-bold  mb-8 text-center", "Enter IPv4 Network Information" }
+        div { class: "w-full h-150  bg-gray-800 rounded-lg shadow-lg p-6 flex flex-col",
+            h2 { class: "text-2xl font-bold mb-6 text-center", "Enter IPv4 Network Information" }
 
             // IP Input
             div { class: "mb-6",
                 label { class: "block text-left text-sm font-medium  mb-2", "IP Address" }
                 input {
-                    class: "w-full  px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700",
+                    class: "w-full px-4 py-3 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent",
                     r#type: "text",
                     placeholder: "e.g. 192.168.1.0",
                     value: "{ip_input}",
@@ -49,7 +49,7 @@ pub fn InputPanel(
             div { class: "mb-6",
                 label { class: "block text-left text-sm font-medium  mb-2", "Subnet Mask" }
                 select {
-                    class: "w-full px-4 py-3 pr-10  border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none",
+                    class: "w-full px-4 py-3 pr-10  border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none",
                     style: "background-image: url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e\"); background-position: right 0.75rem center; background-repeat: no-repeat; background-size: 1.5em;",
 
                     // Control the select with the current signal value
@@ -73,7 +73,7 @@ pub fn InputPanel(
             div { class: "mb-6",
                 label { class: "block text-left text-sm font-medium  mb-2", "Subnet Mode" }
                 select {
-                    class: "block  w-60 mx-0 px-4 py-3 pr-10 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none",
+                    class: "block w-60 mx-0 px-4 py-3 pr-10 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none",
                     style: "background-image: url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e\"); background-position: right 0.75rem center; background-repeat: no-repeat; background-size: 1.5em;",
                     onchange: move |e| {
                         let val = e.value();
@@ -99,7 +99,7 @@ pub fn InputPanel(
                     input {
                         r#type: "number",
                         min: "1",
-                        class: "w-full px-4 py-3 border  rounded-lg dark:bg-gray-700 hide-number-spinner",
+                        class: "w-full px-4 py-3 border  rounded-lg bg-gray-700 hide-number-spinner",
                         placeholder: "e.g. 32",
                         value: "{count_input}",
                         oninput: move |e| count_input.set(e.value())
@@ -109,15 +109,6 @@ pub fn InputPanel(
 
             //Padding to push calculate button down
             div { class: "flex-1" }
-            if show_error {
-                div { class: "mb-4 text-red-600 dark:text-red-400 text-sm text-center font-medium ",
-                    if current_mode == SubnetMode::ByHosts {
-                        "Please enter the number of hosts needed"
-                    } else {
-                        "Please enter the number of subnets needed"
-                    }
-                }
-            }
             div {
                 class: "grid grid-cols-3",
                 button {
@@ -140,7 +131,7 @@ pub fn InputPanel(
                 button {
                     class: "w-full ml-2 bg-red-500 hover:bg-red-500 text-white font-bold  py-4 rounded-lg text-lg transition",
                     onclick: move |_| {
-                        ip_input.set("".to_string());
+                        ip_input.set("192.168.1.0".to_string());
                         mode.set(SubnetMode::Inspect);
                         count_input.set("".to_string());
                         result.set(None);

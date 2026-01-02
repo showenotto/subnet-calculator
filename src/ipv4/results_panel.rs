@@ -5,9 +5,9 @@ use crate::ipv4::{calculator::{LAST_N, LIMIT}, types::{CalculationResult, Ipv4In
 
 fn get_tab_class(is_active: bool) -> &'static str {
     if is_active {
-        "px-6 py-3 font-medium font-roboto border-b-2 border-blue-600 text-blue-600 dark:text-blue-400"
+        "px-6 py-3 font-medium font-roboto border-b-2 border-blue-600 text-blue-400"
     } else {
-        "px-6 py-3 font-medium font-roboto border-b-2 border-transparent text-white-600 hover:text-gray-400 dark:hover:text-gray-400"
+        "px-6 py-3 font-medium font-roboto border-b-2 border-transparent text-white-600 hover:text-gray-400"
     }
 }
 
@@ -16,8 +16,8 @@ pub fn ResultsPanel(result: Option<Result<CalculationResult, Ipv4InputError>>) -
     let mut active_tab = use_signal(|| 0); // 0 = Summary, 1 = Subnets
 
     rsx! {
-        div { class: "h-150 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 overflow-auto",
-            h2 { class: "text-2xl font-bold font-roboto mb-8 text-center", "Results" }
+        div { class: "h-150 bg-gray-800 rounded-lg shadow-lg p-6 overflow-auto",
+            h2 { class: "text-xl font-bold mb-6 text-center", "Results" }
 
             match result {
                 None => rsx! { PlaceholderMessage {} },
@@ -31,7 +31,7 @@ pub fn ResultsPanel(result: Option<Result<CalculationResult, Ipv4InputError>>) -
 
                     rsx! {
                         // Tabs bar
-                        div { class: "flex grid grid-cols-2 border-b border-gray-300 dark:border-gray-600 mb-8",
+                        div { class: "flex grid grid-cols-2 border-b border-gray-600 mb-6",
                             button {
                                 class: "{summary_tab_class} transition-colors",
                                 onclick: move |_| active_tab.set(0),
@@ -83,7 +83,7 @@ fn ErrorMessage(err: Ipv4InputError) -> Element {
         Ipv4InputError::InvalidPrefix => "Invalid prefix length".to_string(),
     };
     rsx! {
-        div { class: "bg-red-100 dark:bg-red-900/40 border font-roboto border-red-500 text-red-700 dark:text-red-300 p-6 rounded-lg",
+        div { class: "bg-red-900/40 border font-roboto border-red-500 text-red-300 p-6 rounded-lg",
             strong { "Error: " } "{msg}"
         }
     }
@@ -117,8 +117,8 @@ fn SummaryTable(summary: SubnetResult, new_prefix: Option<u8>, subnets: Vec<Subn
                     SummaryRow { label: "Broadcast", value: display.broadcast }
                     SummaryRow { label: "Usable Hosts", value: display.usable_hosts }
                     if is_subnetted {
-                        tr { class: "border-b dark:border-gray-700",
-                            th { class: "px-4 py-3 font-medium font-roboto text-gray-700 dark:text-gray-300", 
+                        tr { class: "border-b border-gray-700",
+                            th { class: "px-4 py-3 font-medium font-roboto text-gray-300", 
                                 span {"New Prefix" }
                             }
                             td { class: "px-4 py-3 font-roboto ", 
@@ -135,8 +135,8 @@ fn SummaryTable(summary: SubnetResult, new_prefix: Option<u8>, subnets: Vec<Subn
 #[component]
 fn SummaryRow(label: &'static str, value: String) -> Element {
     rsx! {
-        tr { class: "border-b dark:border-gray-700",
-            th { class: "px-4 py-3 font-medium text-gray-700 dark:text-gray-300 w-1/3", span {"{label}"} }
+        tr { class: "border-b border-gray-700",
+            th { class: "px-4 py-3 font-medium text-gray-300 w-1/3", span {"{label}"} }
             td { class: "px-4 py-3 break-all", span {"{value}" }}
         }
     }
@@ -150,7 +150,7 @@ fn SubnetTable(subnets:Vec<crate::ipv4::types::SubnetResult>, base_prefix: u8, t
         div { class: "mt-12 h-80",
             div { class: "overflow-x-auto",
                 table { class: "w-full text-sm font-roboto text-left",
-                    thead { class: "bg-gray-100 dark:bg-gray-700",
+                    thead { class: "bg-gray-700",
                         tr {
                             th { class: "px-4 py-3 w-24", span {"ID" }}
                             th { class: "px-4 py-3", span {"Subnet" }}
@@ -175,7 +175,7 @@ fn SubnetTable(subnets:Vec<crate::ipv4::types::SubnetResult>, base_prefix: u8, t
                                 // Handle the truncation ellipsis row separately
                                 if is_truncated && i == first_k {
                                     rsx! {
-                                        tr { class: "border-t dark:border-gray-700",
+                                        tr { class: "border-t border-gray-700",
                                             td { colspan: "4",
                                                 class: "px-4 py-3 text-center text-gray-500 italic",
                                                 "..."
@@ -185,7 +185,7 @@ fn SubnetTable(subnets:Vec<crate::ipv4::types::SubnetResult>, base_prefix: u8, t
                                     }
                                 } else {
                                     rsx! {
-                                        tr { class: "border-t dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50",
+                                        tr { class: "border-t border-gray-700 hover:bg-gray-700/50",
                                             td { class: "px-4 py-3 ", span { "{id}" } }
                                             td { class: "px-4 py-3 ", span { "{sub.network}" } }
                                             td { class: "px-4 py-3 ",
