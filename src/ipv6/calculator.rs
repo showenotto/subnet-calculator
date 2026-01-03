@@ -3,7 +3,7 @@ use std::net::Ipv6Addr;
 use std::str::FromStr;
 use crate::ipv6::types::{CalculationResult, HierarchyLevel, HierarchyNode, HierarchyResult, Ipv6InputError, SubnetMode, SubnetResult};
 
-pub const LIMIT: usize = 4096;
+pub const LIMIT: usize = 8192;
 pub const LAST_N: usize = 10;
 
 pub fn expand_ipv6(addr: Ipv6Addr) -> String {

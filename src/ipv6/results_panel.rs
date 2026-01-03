@@ -1,13 +1,13 @@
 // src/ipv6/results_panel.rs
 use dioxus::prelude::*;
 use crate::ipv6::types::{CalculationResult, HierarchyLevel, HierarchyNode, Ipv6InputError, SubnetResult};
-use crate::ipv6::calculator::{LAST_N, LIMIT};
+use crate::ipv6::calculator::{LAST_N,LIMIT};
 
 fn get_tab_class(is_active: bool) -> &'static str {
     if is_active {
-        "px-6 py-3 font-medium font-roboto border-b-2 border-blue-600 text-blue-400"
+        "px-6 py-3 font-medium border-b-2 border-blue-600 text-blue-400"
     } else {
-        "px-6 py-3 font-medium font-roboto border-b-2 border-transparent text-white-600 hover:text-gray-400"
+        "px-6 py-3 font-medium border-b-2 border-transparent text-white-600 hover:text-gray-400"
     }
 }
 #[component]
@@ -21,7 +21,7 @@ pub fn ResultsPanel(result: Option<Result<CalculationResult, Ipv6InputError>>, h
 
     rsx! {
         // Changed h-full to a fixed height or min-height to match IPv4 style if needed
-        div { class: "h-150 bg-gray-800 rounded-lg shadow-lg p-6 overflow-auto",
+        div { class: "h-150 bg-gray-800 rounded-lg shadow-lg p-6 overflow-auto col-span-2",
             h2 { class: "text-xl font-bold mb-6 text-center", "Results" }
 
             match result {
@@ -121,7 +121,7 @@ fn PlaceholderMessage() -> Element {
 fn ErrorMessage(err: Ipv6InputError) -> Element {
     let msg = match err {
         Ipv6InputError::ParseError(s) => s,
-        Ipv6InputError::InvalidPrefix => "Invalid prefix".to_string(),
+        Ipv6InputError::InvalidPrefix => "Invalid prefix. Child prefix must be bigger than the original prefix".to_string(),
         Ipv6InputError::InsufficientBits => "Insufficient bits for hierarchy".to_string(),
     };
     rsx! { div { class: "bg-red-900/40 p-4 rounded text-sm text-red-300", strong { "Error: " } "{msg}" } }
@@ -160,12 +160,12 @@ fn SubnetTable(subnets: Vec<SubnetResult>, total_subnets: u128) -> Element {
                                     if is_truncated && i == first_k {
                                         rsx! {
                                             tr {
-                                                td { colspan: "3", class: "text-center italic py-8 text-gray-500",
+                                                td { colspan: "3", class: "text-center italic py-1 text-gray-500",
                                                     "..."
                                                 }
                                             }
                                             tr {
-                                                td { colspan: "3", class: "text-center text-gray-500 pb-6",
+                                                td { colspan: "3", class: "text-center text-gray-500 p-6 italic",
                                                     p { "Showing only {LIMIT} subnets (first {first_k} + last {LAST_N} subnets, too many to list all)" }
                                                 }
                                             }
@@ -202,10 +202,48 @@ fn HierarchyNodeComponent(node: HierarchyNode) -> Element {
                 }
                 "{node.label}   →   {node.prefix}"
             }
+            /*
             if expanded() && !node.children.is_empty() {
                 ul { class: "pl-12 border-l border-gray-600 ml-2",
                     for child in node.children {
                         HierarchyNodeComponent { node: child }
+                    }
+                }
+            }
+            */
+            if expanded() && !node.children.is_empty() {
+                ul { class: "pl-12 border-l border-gray-600 ml-2",
+                    {
+                        let children = node.children;
+                        let len = children.len();
+
+                        if len > LIMIT {
+                            // Truncated: first (LIMIT - LAST_N) + ellipsis + last LAST_N
+                            let first_k = LIMIT - LAST_N;
+
+                            rsx! {
+                                // First K children
+                                for child in children[..first_k].iter().cloned() {
+                                    HierarchyNodeComponent { node: child }
+                                }
+
+                                li { class: "py-1 text-gray-500 text-center text-sm italic ",
+                                    "Showing only {LIMIT} nodes (first {LIMIT - LAST_N} + last {LAST_N}). Too many to show all."
+                                }
+
+                                // Last N children
+                                for child in children[len - LAST_N..].iter().cloned() {
+                                    HierarchyNodeComponent { node: child }
+                                }
+                            }
+                        } else {
+                            // No truncation: all children
+                            rsx! {
+                                for child in children {
+                                    HierarchyNodeComponent { node: child }
+                                }
+                            }
+                        }
                     }
                 }
             }

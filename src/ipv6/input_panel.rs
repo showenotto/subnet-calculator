@@ -1,5 +1,5 @@
 use dioxus::prelude::*;
-use crate::ipv6::types::{CalculationResult, HierarchyLevel, Ipv6InputError, PREFIX_OPTIONS, SubnetMode};
+use crate::ipv6::types::{CalculationResult, HierarchyLevel, Ipv6InputError, MAX_USABLE_SUBNETS, PREFIX_OPTIONS, SubnetMode};
 use crate::ipv6::calculator::calculate;
 
 #[component]
@@ -17,6 +17,13 @@ pub fn InputPanel(
     let is_by_prefix = current_mode == SubnetMode::ByPrefix;
     let is_by_hierarchy = current_mode == SubnetMode::ByHierarchy;
     let is_inspect = current_mode == SubnetMode::Inspect;
+    let total_usable_subnets = if is_by_hierarchy && !hierarchy_levels.read().is_empty() {
+        hierarchy_levels.read().iter().fold(1u128, |acc, l| acc * l.num as u128)
+    } else {
+        0
+    };
+    let too_many_subnets = total_usable_subnets > MAX_USABLE_SUBNETS;
+    let hierarchy_error = too_many_subnets && is_by_hierarchy;
 
     // New: Signal for parsed base prefix (from prefix_input, e.g., "/48" -> 48)
     let mut parsed_base_prefix = use_signal(|| 48u8); // Default to 48 if parsing fails
@@ -54,16 +61,9 @@ pub fn InputPanel(
     let mut current_bits = use_signal(|| 0u8); // 0 means no selection
 
     // New: Compute sum of bits in existing levels
-    let mut sum_previous_bits: u32 = hierarchy_levels.read().iter().map(|l| l.bits as u32).sum();
+    let sum_previous_bits: u32 = hierarchy_levels.read().iter().map(|l| l.bits as u32).sum();
 
     // New: Compute remaining bits (up to /64 for subnetting, leaving 64 for IIDs)
-    /*
-    let mut max_available_bits = if *parsed_base_prefix.read() <= 64 {
-        64u32 - *parsed_base_prefix.read() as u32 - sum_previous_bits
-    } else {
-        0
-    };
-    */
     let max_available_bits = if *parsed_base_prefix.read() > 64 {
         0
     } else {
@@ -72,19 +72,20 @@ pub fn InputPanel(
     };
 
     // NEW: Compute total usable subnets from hierarchy (product of all level.num)
-    let total_usable_subnets = if is_by_hierarchy && !hierarchy_levels.read().is_empty() {
-        hierarchy_levels.read().iter().fold(1u128, |acc, l| acc * l.num as u128)
-    } else {
-        0
-    };
 
     //Disable calculation button
     let is_disabled = match current_mode {
         SubnetMode::BySubnets => count_input.with(|input| input.trim().parse::<u32>().map_or(true, |n| n < 1)),
         SubnetMode::ByPrefix => child_prefix_input.with(|input| input.trim().parse::<u8>().map_or(true, |p| p > 64)),
         SubnetMode::ByHierarchy => {
+            //let levels = hierarchy_levels.read();
+            /* 
             let levels = hierarchy_levels.read();
-            levels.is_empty() || levels.iter().any(|l| l.num < 1 || l.bits < 1)
+            levels.is_empty() || levels.iter().any(|l| l.num < 1 || l.bits < 1) || too_many_subnets
+            */
+            hierarchy_levels.read().is_empty() || hierarchy_levels.read().iter().any(|l| l.num < 1 || l.bits < 1)|| too_many_subnets
+            
+
         }
         _ => false,
     };
@@ -202,15 +203,17 @@ pub fn InputPanel(
                                 oninput: move |e| current_label.set(e.value())
                             }
                         }
-                       
+                        /*
                         div { class: "mb-6",
                             label { class: "block text-sm text-left font-medium mb-2", "Number of Subnets" }
                             select {
+                                id: "h-input",
+                                size: 6,
                                 class: "flex px-4 py-2 pr-10 text-sm border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none",
-                                style: "background-image: url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e\"); background-position: right 0.75rem center; background-repeat: no-repeat; background-size: 1.5em;",
+                                //style: "background-image: url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e\"); background-position: right 0.75rem center; background-repeat: no-repeat; background-size: 1.5em;",
                                 value: "{current_bits}",
                                 oninput: move |e| current_bits.set(e.value().parse::<u8>().unwrap_or(0)),
-                                option { value: "0", "Select..." } // Default/no selection
+                                //option { value: "0", "Select..." } // Default/no selection
                                 // Dynamically generate options based on remaining bits (up to 16 for perf)
                                 for bits in 1..=max_available_bits.min(16) {
                                     option {
@@ -220,11 +223,15 @@ pub fn InputPanel(
                                 }
                             }
                         }
+                        */
+                        SubnetBitsDropdown {
+                            current_bits,
+                            max_available_bits: max_available_bits as u8
+                        }
 
                         // New: Buttons for add/remove
                         div { class: "mb-4",
                             button {
-                                //class: "mt-2 text-base bg-green-500 px-4 py-2 rounded {if max_available_bits == 0 || *current_bits.read() == 0 || current_label.read().is_empty() { \"opacity-50 cursor-not-allowed\" } else { \"\" }}",
                                 class: {
                                     let mut classes = vec![
                                         "mt-2",
@@ -262,7 +269,6 @@ pub fn InputPanel(
                             }
                             
                             button {
-                                //class: "mt-2 ml-2 text-base bg-red-500 px-4 py-2 rounded {if hierarchy_levels.read().is_empty() { \"opacity-50 cursor-not-allowed\" } else { \"\" }}",
                                 class: {
                                     let mut classes = vec![
                                         "mt-2",
@@ -323,6 +329,13 @@ pub fn InputPanel(
                                 "Total usable subnets: {total_usable_subnets}"
                             }
                         }
+                        if hierarchy_error {
+                            div { class: "mb-4 p-4 bg-red-900/50 border border-red-700 rounded-lg text-red-200 text-sm",
+                                strong { "Error: " }
+                                "The current hierarchy would generate {total_usable_subnets} subnets, which is too many to calculate efficiently. "
+                                "Please reduce the number of subnets per level (maximum allowed: {MAX_USABLE_SUBNETS})."
+                            }
+                        }
                     }
             // Spacer to push buttons to bottom
             div { class: "flex-1" }
@@ -353,6 +366,86 @@ pub fn InputPanel(
                         result.set(None);
                     },
                     "Clear"
+                }
+            }
+        }
+    }
+}
+
+#[component]
+pub fn SubnetBitsDropdown(
+    current_bits: Signal<u8>,
+    max_available_bits: u8,
+) -> Element {
+    let mut is_open = use_signal(|| false);
+
+    rsx! {
+        div { class: "relative mb-6",
+
+            label { class: "block text-sm text-left font-medium mb-2", "Number of Subnets" }
+
+            // Main toggle button
+            button {
+                class: "w-60 px-4 py-2 text-left text-sm text-white bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent flex justify-between items-center",
+                prevent_default: "onclick",
+                onclick: move |evt| {
+                    evt.stop_propagation();
+                    is_open.toggle();
+                },
+
+                {
+                    let bits = *current_bits.read();
+                    if bits == 0 {
+                        rsx! { span { class: "text-gray-400", "Select..." } }
+                    } else {
+                        let num = 1u32 << bits;
+                        let s = if num > 1 { "s" } else { "" };
+                        let bit_s = if bits > 1 { "s" } else { "" };
+                        rsx! { "{num} subnet{s} ({bits} bit{bit_s})" }
+                    }
+                }
+
+                svg {
+                    class: {
+                        let base = "w-5 h-5 text-gray-400 ml-2 transition-transform duration-200";
+                        let rotate = if is_open() { " rotate-180" } else { "" };
+                        format!("{base}{rotate}")
+                    },
+                    xmlns: "http://www.w3.org/2000/svg",
+                    view_box: "0 0 20 20",
+                    fill: "currentColor",
+                    path { d: "M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" }
+                }
+            }
+
+            // Dropdown menu
+            if is_open() {
+                div {
+                    class: "absolute z-50 mt-2 w-60 bg-gray-700 border border-gray-600 rounded-lg shadow-xl max-h-60 overflow-y-auto",
+                    onclick: move |evt| evt.stop_propagation(), // Prevent closing when clicking inside
+
+                    {(1..=max_available_bits.min(16u8)).map(|bits| {
+                        let num = 1u32 << bits;
+                        let s = if num > 1 { "s" } else { "" };
+                        let bit_s = if bits > 1 { "s" } else { "" };
+                        let is_selected = *current_bits.read() == bits;
+
+                        let base_class = "w-full px-4 py-3 text-left text-xs text-white hover:bg-gray-600";
+                        let selected_class = if is_selected { " bg-gray-600" } else { "" };
+
+                        rsx! {
+                            button {
+                                key: "{bits}",
+                                class: "{base_class}{selected_class}",
+                                onclick: move |evt| {
+                                    evt.stop_propagation();
+                                    current_bits.set(bits);
+                                    is_open.set(false);
+                                },
+                                "{num} subnet{s} ({bits} bit{bit_s})"
+                            }
+                        }
+                    })}
                 }
             }
         }

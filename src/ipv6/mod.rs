@@ -4,11 +4,9 @@ pub mod input_panel;
 pub mod results_panel;
 
 use dioxus::prelude::*;
-use gloo_timers::future::TimeoutFuture;
 use crate::ipv6::types::{CalculationResult, Ipv6InputError, HierarchyLevel, SubnetMode};
 use crate::ipv6::input_panel::InputPanel;
 use crate::ipv6::results_panel::ResultsPanel;
-use crate::ipv6::calculator::calculate;
 
 #[component]
 pub fn Ipv6Tab() -> Element {
@@ -18,8 +16,8 @@ pub fn Ipv6Tab() -> Element {
     let mode = use_signal(|| SubnetMode::Inspect);
     let count_input = use_signal(|| "".to_string()); // For BySubnets mode
     let child_prefix_input = use_signal(|| "".to_string()); // For ByPrefix mode
-    let mut hierarchy_levels = use_signal(|| vec![] as Vec<HierarchyLevel>); // For ByHierarchy
-    let mut result = use_signal(|| None::<Result<CalculationResult, Ipv6InputError>>);
+    let hierarchy_levels = use_signal(|| vec![] as Vec<HierarchyLevel>); // For ByHierarchy
+    let result = use_signal(|| None::<Result<CalculationResult, Ipv6InputError>>);
 
     rsx! {
         div { class: "grid grid-cols-3 gap-4",
@@ -32,9 +30,7 @@ pub fn Ipv6Tab() -> Element {
                 hierarchy_levels,
                 result
             }
-            div { class: "col-span-2",
-                ResultsPanel { result: result.read().clone(), hierarchy_levels}
-            }
+            ResultsPanel { result: result.read().clone(), hierarchy_levels}
         }
     }
 }

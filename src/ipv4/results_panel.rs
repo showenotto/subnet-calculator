@@ -5,9 +5,9 @@ use crate::ipv4::{calculator::{LAST_N, LIMIT}, types::{CalculationResult, Ipv4In
 
 fn get_tab_class(is_active: bool) -> &'static str {
     if is_active {
-        "px-6 py-3 font-medium font-roboto border-b-2 border-blue-600 text-blue-400"
+        "px-6 py-3 font-medium border-b-2 border-blue-600 text-blue-400"
     } else {
-        "px-6 py-3 font-medium font-roboto border-b-2 border-transparent text-white-600 hover:text-gray-400"
+        "px-6 py-3 font-medium border-b-2 border-transparent text-white-600 hover:text-gray-400"
     }
 }
 

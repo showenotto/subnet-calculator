@@ -38,4 +38,20 @@
     background: #acd5ff;
     color: #000;
   }
+
+  /*Change*/
+  #h-input option:checked{
+    background-color: #e5e7eb; /* light gray (Tailwind gray-200) */
+    color: #e5e7eb;
+  }
+
+  #h-input option:hover{
+    background-color: #e5e7eb; /* light gray (Tailwind gray-200) */
+    color: #e5e7eb;
+  }
+  /*
+  select:hover{
+    background-color: #e5e7eb;
+  }
+    */
 }
