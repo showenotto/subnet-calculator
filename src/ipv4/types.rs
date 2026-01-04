@@ -1,38 +1,9 @@
-use ipnet::{Ipv4Net};
+use ipnet::Ipv4Net;
 
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum Ipv4InputError {
-    ParseError(String),
-    InvalidMask,
-    InvalidPrefix,
-}
+pub use crate::common::types::{
+   IpSubnetResult, SubnetMode, SubnetResultV4 as SubnetResult,
+};
 
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct SubnetResult {
-    pub network: Ipv4Net,
-    pub netmask: String,
-    pub wildcard: String,
-    pub broadcast: String,
-    pub first_host: Option<String>,
-    pub last_host: Option<String>,
-    pub usable_hosts: u32,
-}
-
-#[derive(Clone, PartialEq)]
-pub enum SubnetMode {
-    ByHosts,
-    BySubnets,
-    Inspect,
-}
-
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct CalculationResult {
-    pub base_network: Ipv4Net,
-    pub summary: SubnetResult,
-    pub subnets: Vec<SubnetResult>,  // Empty if no splitting
-    pub new_prefix: Option<u8>,     // Only when splitting
-    pub total_subnets: u64,
-}
 
 pub const CIDR_OPTIONS: &[(u8, &str, &str)] = &[
     (1,  "/1",   "128.0.0.0"),
@@ -67,3 +38,14 @@ pub const CIDR_OPTIONS: &[(u8, &str, &str)] = &[
     (30, "/30",  "255.255.255.252"),
     (31, "/31",  "255.255.255.254"),
 ];
+
+// Keep your original error enum — it's IPv4-specific
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum Ipv4InputError {
+    ParseError(String),
+    InvalidMask,
+    InvalidPrefix,
+}
+
+// Re-export the specific type aliases for convenience
+pub type CalculationResult = crate::common::types::CalculationResult<Ipv4Net>;

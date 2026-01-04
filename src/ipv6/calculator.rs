@@ -1,7 +1,9 @@
-use ipnet::{Ipv6Net, Ipv6Subnets};
+use ipnet::{Ipv6Net};
 use std::net::Ipv6Addr;
 use std::str::FromStr;
-use crate::ipv6::types::{CalculationResult, HierarchyLevel, HierarchyNode, HierarchyResult, Ipv6InputError, SubnetMode, SubnetResult};
+use crate::common::calculator::{bits_needed_for_count, collect_subnets};
+use crate::ipv6::types::{HierarchyLevel, HierarchyNode, HierarchyResult, Ipv6InputError, MAX_USABLE_SUBNETS, SubnetMode};
+use crate::common::types::{CalculationResult, IpSubnetResult, SubnetResultV6 as SubnetResult};
 
 pub const LIMIT: usize = 8192;
 pub const LAST_N: usize = 10;
@@ -39,211 +41,203 @@ fn is_unicast_global(addr: Ipv6Addr) -> bool {
     (segments[0] & 0xe000) == 0x2000
 }
 
-fn collect_subnets(mut iter: Ipv6Subnets, total: u128, subnet_prefix: u8, base_network: Ipv6Net) -> Vec<SubnetResult> {
-    let mut subnets = vec![];
-    if (total as usize) <= LIMIT {
-        for net in iter.take(LIMIT) {
-            subnets.push(build_subnet_result(net));
-        }
-    } else {
-        let first_k = LIMIT - LAST_N;
-
-        // Collect first `first_k` subnets
-        for _ in 0..first_k {
-            if let Some(net) = iter.next() {
-                subnets.push(build_subnet_result(net));
-            }
-        }
-
-        // Now calculate the last `LAST_N` manually
-        let subnet_size = 1u128 << (128 - subnet_prefix as u32);
-        let base_u128 = u128::from(base_network.network());
-
-        for k in 0..LAST_N {
-            //let n = total - (LAST_N as u128 - k as u128);  // index of the k-th last subnet (1-based)
-            let n = total - (LAST_N as u128 - k as u128 - 1);
-            let offset = (n - 1) * subnet_size;
-            let start = Ipv6Addr::from(base_u128 + offset);
-            let net = Ipv6Net::new(start, subnet_prefix).unwrap();
-            subnets.push(build_subnet_result(net));
-        }
-    }
-    subnets
-}
-
 pub fn get_addr_type(addr: Ipv6Addr) -> String {
+    let segments = addr.segments();
     if addr.is_unspecified() {
         "Unspecified".to_string()
     } else if addr.is_loopback() {
         "Loopback".to_string()
-    } else if addr.is_unique_local() {
-        "Unique Local".to_string()
-    } else if addr.is_unicast_link_local() {
-        "Link-Local".to_string()
     } else if addr.is_multicast() {
         "Multicast".to_string()
-    } else if is_unicast_global(addr) {  // Note: this is the stable name!
+    } else if segments[0] == 0 && segments[1] == 0 && segments[2] == 0 && segments[3] == 0 && segments[4] == 0 && segments[5] == 0xffff {
+        "IPv4-Mapped".to_string()
+    } else if is_unicast_global(addr) {
         "Global Unicast".to_string()
+    } else if addr.segments()[0] == 0xfc00 {
+        "Unique Local".to_string()
+    } else if addr.segments()[0] == 0xfe80 {
+        "Link-Local".to_string()
     } else {
-        "Other".to_string()
+        "Reserved/Other".to_string()
     }
 }
 
 fn build_subnet_result(net: Ipv6Net) -> SubnetResult {
-    let addr = net.network();
-    let compressed = addr.to_string();
-    let expanded = expand_ipv6(addr);
-    let addr_type = get_addr_type(addr);
-    let first = net.hosts().next().unwrap_or(addr).to_string();
-    let last = net.hosts().last().unwrap_or(addr).to_string();
+    let compressed = net.to_string();
+    let expanded = expand_ipv6(net.network());
+    let addr_type = get_addr_type(net.network());
+    let first_host = if net.prefix_len() < 128 {
+        let addr_u128 = u128::from(net.network()) + 1;
+        expand_ipv6(Ipv6Addr::from(addr_u128))
+    } else {
+        expand_ipv6(net.network())
+    };
+    let last_host = if net.prefix_len() < 128 {
+        expand_ipv6(net.broadcast())
+    } else {
+        expand_ipv6(net.network())
+    };
+
     SubnetResult {
         network: net,
         compressed,
         expanded,
         addr_type,
-        first_host: first,
-        last_host: last,
+        first_host,
+        last_host,
     }
+}
+
+pub fn parse_network(input: &str) -> Result<Ipv6Net, Ipv6InputError> {
+    Ipv6Net::from_str(input.trim()).map_err(|e| Ipv6InputError::ParseError(e.to_string()))
 }
 
 pub fn calculate(
     addr: &str,
     prefix_str: &str,
     mode: SubnetMode,
-    needed_subnets: Option<u32>,
-    child_prefix: Option<u8>,
+    needed_subnets: Option<u128>,
+    target_prefix: Option<u8>,
     hierarchy_levels: Vec<HierarchyLevel>,
-) -> Result<CalculationResult, Ipv6InputError> {
-    let base_network = Ipv6Net::from_str(&format!("{}/{}", addr.trim(), prefix_str.trim().strip_prefix('/').unwrap_or(prefix_str)))
-        .map_err(|e| Ipv6InputError::ParseError(e.to_string()))?;
+) -> Result<CalculationResult<Ipv6Net>, Ipv6InputError> {
+    // Merge address and prefix, handling potential leading slashes in the prefix_str
+    let full_input = format!(
+        "{}/{}", 
+        addr.trim(), 
+        prefix_str.trim().strip_prefix('/').unwrap_or(prefix_str.trim())
+    );
+    
+    let base_network = parse_network(&full_input)?;
     let base_prefix = base_network.prefix_len();
-
-    let mut subnets = vec![];
-    let new_prefix: Option<u8>;
-    let total_subnets: u128;
-
-    // New: Optional hierarchy result
+    let mut new_prefix = None;
+    let mut total_subnets = 1u128;
+    let mut subnets: Vec<IpSubnetResult> = vec![];
     let mut hierarchy: Option<HierarchyResult> = None;
 
     match mode {
         SubnetMode::Inspect => {
-            new_prefix = None;
-            total_subnets = 1;
-            // subnets remains empty
-            subnets.push(build_subnet_result(base_network));
+            subnets.push(IpSubnetResult::V6(build_subnet_result(base_network)));
         }
-
-        SubnetMode::BySubnets => {
-            let count = needed_subnets.ok_or(Ipv6InputError::ParseError("Missing count".into()))? as u128;
-            let bits_needed = count.next_power_of_two().trailing_zeros() as u8;
-            let np = base_prefix.checked_add(bits_needed)
-                .ok_or(Ipv6InputError::InsufficientBits)?;
-            if np > 128 {
-                return Err(Ipv6InputError::InsufficientBits);
-            }
-            new_prefix = Some(np);
-            total_subnets = 1u128 << bits_needed as u32;
-            let iter = base_network.subnets(np).unwrap();
-            subnets = collect_subnets(iter, total_subnets, np, base_network);
-        }
-
         SubnetMode::ByPrefix => {
-            let np = child_prefix.ok_or(Ipv6InputError::ParseError("Missing prefix".into()))?;
-            if np <= base_prefix || np > 128 {
+            let target_prefix = target_prefix.ok_or(Ipv6InputError::InvalidPrefix)?;
+            if target_prefix <= base_prefix || target_prefix > 128 {
                 return Err(Ipv6InputError::InvalidPrefix);
             }
-            new_prefix = Some(np);
-            total_subnets = 1u128 << (np - base_prefix) as u32;
-            let iter = base_network.subnets(np).unwrap();
-            subnets = collect_subnets(iter, total_subnets, np, base_network);
-        }
+            let bits = target_prefix - base_prefix;
+            total_subnets = 1u128 << bits as u32;
 
+            let mut iter = base_network.subnets(target_prefix).map_err(|_| Ipv6InputError::InvalidPrefix)?;
+            subnets = collect_subnets(
+                &mut iter,
+                total_subnets,
+                target_prefix,
+                base_network,
+                LIMIT,
+                LAST_N,
+                128,
+                |net| IpSubnetResult::V6(build_subnet_result(net)),
+            );
+
+            new_prefix = Some(target_prefix);
+        }
+        SubnetMode::BySubnets => {
+            let needed_subnets = needed_subnets.ok_or(Ipv6InputError::ParseError("Missing subnets count".into()))?;
+            if needed_subnets == 0 || needed_subnets > MAX_USABLE_SUBNETS {
+                return Err(Ipv6InputError::ParseError("Invalid subnet count".into()));
+            }
+            let available_bits = 128 - base_prefix;
+            let bits_needed = bits_needed_for_count(needed_subnets);
+            if bits_needed > available_bits {
+                return Err(Ipv6InputError::InsufficientBits);
+            }
+            let target_prefix = base_prefix + bits_needed;
+            total_subnets = 1u128 << bits_needed as u32;
+
+            let mut iter = base_network.subnets(target_prefix).map_err(|_| Ipv6InputError::InvalidPrefix)?;
+            subnets = collect_subnets(
+                &mut iter,
+                total_subnets,
+                target_prefix,
+                base_network,
+                LIMIT,
+                LAST_N,
+                128,
+                |net| IpSubnetResult::V6(build_subnet_result(net)),
+            );
+
+            new_prefix = Some(target_prefix);
+        }
         SubnetMode::ByHierarchy => {
             if hierarchy_levels.is_empty() {
-                new_prefix = None;
-                total_subnets = 1;
-                // subnets remains empty
-            } else {
-                // Fixed: Properly build nested hierarchy tree with correct prefixes
-                // Initialize root
-                let mut root = HierarchyNode {
-                    prefix: base_network,
-                    label: "Original Network".to_string(),
-                    children: vec![],
-                };
+                return Err(Ipv6InputError::ParseError("No hierarchy levels provided".into()));
+            }
 
-                // Current set of parents to add children to (starts with root)
-                let mut current_parents: Vec<&mut HierarchyNode> = vec![&mut root];
+            let mut root = HierarchyNode {
+                prefix: base_network,
+                label: "Original Network".to_string(),
+                children: vec![],
+            };
 
-                let mut current_prefix = base_prefix;
+            let mut current_parents: Vec<&mut HierarchyNode> = vec![&mut root];
+            let mut current_prefix = base_prefix;
 
-                for level in hierarchy_levels.iter() {
-                    // Calculate min bits needed
-                    let bits_needed = (level.num as f64).log2().ceil() as u8;
-                    if bits_needed > level.bits {
-                        return Err(Ipv6InputError::InsufficientBits);
-                    }
-
-                    // Update cumulative prefix for child subnets
-                    current_prefix = current_prefix.checked_add(level.bits)
-                        .ok_or(Ipv6InputError::InsufficientBits)?;
-                    if current_prefix > 128 {
-                        return Err(Ipv6InputError::InsufficientBits);
-                    }
-
-                    // Prepare next set of parents
-                    let mut new_parents = vec![];
-
-                    // For each current parent, generate and attach children
-                    for parent in current_parents {
-                        let mut children = vec![];
-
-                        // Generate subnets from parent's prefix at current_prefix length
-                        if let Ok(iter) = parent.prefix.subnets(current_prefix) {
-                            for (i, net) in iter.enumerate().take(level.num as usize) {
-                                children.push(HierarchyNode {
-                                    prefix: net,
-                                    label: format!("{} {}", level.name, i + 1),
-                                    children: vec![],
-                                });
-                            }
-                        }
-
-                        // Attach to parent
-                        parent.children = children;
-
-                        // Add children as next parents (mutable refs)
-                        for child in parent.children.iter_mut() {
-                            new_parents.push(child);
-                        }
-                    }
-
-                    // Update for next level
-                    current_parents = new_parents;
+            for level in hierarchy_levels.iter() {
+                let bits_needed = bits_needed_for_count(level.num as u128);
+                if bits_needed > level.bits {
+                    return Err(Ipv6InputError::InsufficientBits);
                 }
 
-                // Use root's children as the top-level tree (skip "Root")
-                //let tree = root.children;
-                let tree = vec![root];
+                current_prefix = current_prefix.checked_add(level.bits)
+                    .ok_or(Ipv6InputError::InsufficientBits)?;
+                if current_prefix > 128 {
+                    return Err(Ipv6InputError::InsufficientBits);
+                }
 
-                hierarchy = Some(HierarchyResult {
-                    levels: hierarchy_levels.clone(),
-                    tree,
-                });
+                let mut new_parents = vec![];
 
-                new_prefix = None;
-                total_subnets = 0;
-                subnets = vec![];
+                for parent in current_parents {
+                    let mut children = vec![];
+
+                    if let Ok(iter) = parent.prefix.subnets(current_prefix) {
+                        for (i, net) in iter.enumerate().take(level.num as usize) {
+                            children.push(HierarchyNode {
+                                prefix: net,
+                                label: format!("{} {}", level.name, i + 1),
+                                children: vec![],
+                            });
+                        }
+                    }
+
+                    parent.children = children;
+
+                    for child in parent.children.iter_mut() {
+                        new_parents.push(child);
+                    }
+                }
+
+                current_parents = new_parents;
             }
+
+            let tree = vec![root];
+
+            hierarchy = Some(HierarchyResult {
+                levels: hierarchy_levels.clone(),
+                tree,
+            });
+
+            new_prefix = None;
+            total_subnets = 0;
+            subnets = vec![];
         }
+        SubnetMode::ByHosts => todo!(),
     }
 
     Ok(CalculationResult {
         base_network,
-        summary: if new_prefix.is_some() || hierarchy.is_some() {
-            subnets.first().cloned().unwrap_or(build_subnet_result(base_network))
+        summary: if !subnets.is_empty() {
+            subnets[0].clone()
         } else {
-            build_subnet_result(base_network)
+            IpSubnetResult::V6(build_subnet_result(base_network))
         },
         subnets,
         new_prefix,
