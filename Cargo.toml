@@ -7,11 +7,18 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+arboard = "3.6.1"
 dioxus = { version = "0.7.1", features = [] }
+dioxus-clipboard = "0.3.0"
 gloo-timers = { version = "0.3.0", features = ["futures"] }
-ipnet = "2.11.0"
+#ipnet = "2.11.0"
+ipnet = { version = "2.9", features = ["serde"] }
+js-sys = "0.3.83"
+rfd = "0.17.0"
 serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.148"
 tokio = "1.48.0"
+wasm-bindgen = "0.2.106"
 web-sys = { version = "0.3.83", features = [
   "Window",
   "Document",

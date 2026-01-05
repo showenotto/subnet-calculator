@@ -5,6 +5,7 @@ pub mod forms;
 pub mod input_container;
 pub mod results_container;
 pub mod subnet_table;
+pub mod utils;
 
 pub use header::Header;
 pub use footer::Footer;

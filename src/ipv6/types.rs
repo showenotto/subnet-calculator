@@ -1,4 +1,5 @@
 use ipnet::Ipv6Net;
+use serde::Serialize;
 
 pub use crate::common::types::{
     IpSubnetResult, SubnetMode, SubnetResultV6 as SubnetResult,
@@ -28,20 +29,20 @@ pub enum Ipv6InputError {
 // Re-export with IPv6 specialization
 pub type CalculationResult = crate::common::types::CalculationResult<Ipv6Net>;
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize)]
 pub struct HierarchyLevel {
     pub name: String,
     pub num: u32,
     pub bits: u8,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize)]
 pub struct HierarchyResult {
     pub levels: Vec<HierarchyLevel>,
     pub tree: Vec<HierarchyNode>,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize)]
 pub struct HierarchyNode {
     pub prefix: Ipv6Net,
     pub label: String,
