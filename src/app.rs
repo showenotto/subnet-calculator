@@ -1,6 +1,7 @@
 // src/app.rs
 use dioxus::prelude::*;
 use crate::{components::{ActiveTab, Footer, Header, Tabs}, ipv4::Ipv4Tab, ipv6::Ipv6Tab};
+use crate::assistant::chat_panel::AssistantTab;
 
 #[derive(Props, Clone, PartialEq)]
 struct PlaceholderProps {
@@ -37,12 +38,11 @@ pub fn App() -> Element {
                     }
                 }
 
-                // Converter Tab Content
-                div { class: if *active_tab.read() == ActiveTab::Converter { "" } else { "hidden" },
-                    div { class: "text-center py-16",
-                        h2 { class: "text-4xl font-bold text-gray-400",
-                            "Converter module coming soon..."
-                        }
+                // AI Assistant Tab Content
+                div { class: if *active_tab.read() == ActiveTab::Assistant { "" } else { "hidden" },
+                    div { class: "text-center py-1",
+                        h2 { class: "text-2xl font-bold mb-4", "AI Assistant"}
+                        AssistantTab {}
                     }
                 }
             }

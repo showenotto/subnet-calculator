@@ -4,7 +4,7 @@ use dioxus::prelude::*;
 pub enum ActiveTab {
     Ipv4,
     Ipv6,
-    Converter,
+    Assistant,
 }
 
 #[component]
@@ -23,9 +23,9 @@ pub fn Tabs(active_tab: ActiveTab, on_tab_change: EventHandler<ActiveTab>) -> El
                     onclick: move |_| on_tab_change.call(ActiveTab::Ipv6)
                 }
                 TabButton {
-                    label: "Converter",
-                    active: active_tab == ActiveTab::Converter,
-                    onclick: move |_| on_tab_change.call(ActiveTab::Converter)
+                    label: "AI Assistant",
+                    active: active_tab == ActiveTab::Assistant,
+                    onclick: move |_| on_tab_change.call(ActiveTab::Assistant)
                 }
             }
         }
