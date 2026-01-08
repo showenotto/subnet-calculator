@@ -72,13 +72,16 @@ pub fn ResultsPanel(result: Option<Result<CalculationResult, Ipv4InputError>>) -
 
 #[component]
 fn SummaryView(calc: CalculationResult) -> Element {
-    // This is a reference to the data inside 'calc'
-    let summary_ref = match &calc.summary {
+ let summary_ref = match &calc.summary {
         IpSubnetResult::V4(v4) => v4,
         _ => return rsx! { "Invalid Result" }
     };
-    //Export Button initialization logic
-    let labels = vec!["Network ID", "Netmask", "Wildcard Mask", "First Host", "Last Host", "Broadcast", "Total Subnets"];
+
+    // 1. Updated labels and values for CSV Export
+    let labels = vec![
+        "Network", "Netmask", "Wildcard", "First Host", 
+        "Last Host", "Broadcast", "Usable Hosts", "Total Subnets"
+    ];
     let values = vec![
         summary_ref.network.to_string(),
         summary_ref.netmask.to_string(),
@@ -87,27 +90,27 @@ fn SummaryView(calc: CalculationResult) -> Element {
         summary_ref.last_host.clone().unwrap_or("-".into()),
         summary_ref.broadcast.to_string(),
         calc.total_subnets.to_string(),
+        summary_ref.usable_hosts.to_string(), 
     ];
-    let csv_content = use_memo(move || crate::components::utils::generate_summary_csv(&labels, &values));
+    
+    let csv_content = use_memo(move || {
+        crate::components::utils::generate_summary_csv(&labels, &values)
+    });
 
-    //Copy Button initialization logic
+    // 2. Updated formatted text for Copy Button
     let summary_for_memo = summary_ref.clone();
     let total_subnets = calc.total_subnets;
-    let new_prefix = calc.new_prefix;
-
     let get_text = use_memo(move || {
-        // This closure now owns 'summary_for_memo'
         let mut s = String::new();
-        s.push_str(&format!("Network ID: {}\n", summary_for_memo.network));
+        s.push_str(&format!("Network: {}\n", summary_for_memo.network));
         s.push_str(&format!("Netmask: {}\n", summary_for_memo.netmask));
-        s.push_str(&format!("Wildcard Mask: {}\n", summary_for_memo.wildcard));
-        s.push_str(&format!("First Host: {}\n", summary_for_memo.first_host.as_deref().unwrap_or("-")));
-        s.push_str(&format!("Last Host: {}\n", summary_for_memo.last_host.as_deref().unwrap_or("-")));
+        s.push_str(&format!("Wildcard: {}\n", summary_for_memo.wildcard));
+        s.push_str(&format!("First Host: {}\n", summary_for_memo.first_host.clone().unwrap_or("-".into())));
+        s.push_str(&format!("Last Host: {}\n", summary_for_memo.last_host.clone().unwrap_or("-".into())));
         s.push_str(&format!("Broadcast: {}\n", summary_for_memo.broadcast));
+        // FIX: Pull from summary_for_memo
         s.push_str(&format!("Total Subnets: {}\n", total_subnets));
-        if let Some(p) = new_prefix {
-            s.push_str(&format!("New Prefix: /{}\n", p));
-        }
+        s.push_str(&format!("Usable Hosts: {}\n", summary_for_memo.usable_hosts));
         s
     });
 
@@ -134,8 +137,8 @@ fn SummaryView(calc: CalculationResult) -> Element {
                     SummaryRow { label: "First Host", value: summary_ref.first_host.clone().unwrap_or("-".into()) }
                     SummaryRow { label: "Last Host", value: summary_ref.last_host.clone().unwrap_or("-".into()) }
                     SummaryRow { label: "Broadcast", value: "{summary_ref.broadcast}" }
-                    SummaryRow { label: "Usable Hosts", value: "{summary_ref.usable_hosts}" }
                     SummaryRow { label: "Total Subnets", value: "{calc.total_subnets}" }
+                    SummaryRow { label: "Usable Hosts", value: "{summary_ref.usable_hosts}" }
                     
                     if let Some(p) = calc.new_prefix {
                         tr { class: "border-b border-gray-700",

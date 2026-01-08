@@ -1,16 +1,22 @@
 [application]
-name = "subnet-calculator"
+name = "Subnet Calculator"
 asset_dir = "assets"
 
 [web.resource]
 style = ["main.css"]
 
 [bundle]
-identifier = "com.showen"
+name = "Subnet Calculator"
+identifier = "com.showen.subnetcalculator"
 publisher = "Showen"
 resources = ["assets/"]
-
-
+icon = [
+  "assets/icon.ico",
+  "assets/icon-32.png",
+  "assets/icon-128.png",
+  "assets/icon-512.png",
+  "assets/icon-1024.png"
+]
 # Additional JavaScript files
 script = []
 
