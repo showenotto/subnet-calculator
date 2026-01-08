@@ -2,7 +2,7 @@ use ipnet::Ipv6Net;
 use serde::Serialize;
 
 pub use crate::common::types::{
-    IpSubnetResult, SubnetMode, SubnetResultV6 as SubnetResult,
+    IpSubnetResult, SubnetMode,
 };
 
 pub const MAX_USABLE_SUBNETS: u128 = 131072;

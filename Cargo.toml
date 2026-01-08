@@ -1,8 +1,8 @@
 [package]
 name = "subnet-calculator"
-version = "0.1.0"
-authors = ["Showen Otto <showenotto@proton.me>"]
-edition = "2021"
+version = "1.0.0"
+authors = ["Showen Otto"]
+edition = "2024"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -15,7 +15,6 @@ futures-util = "0.3.31"
 gloo-timers = { version = "0.3.0", features = ["futures"] }
 ipnet = { version = "2.9", features = ["serde"] }
 js-sys = "0.3.83"
-#ollama-rs = "0.3.3"
 ollama-rs = { version = "0.3", features = ["stream"] }
 pulldown-cmark = "0.13.0"
 rfd = "0.17.0"

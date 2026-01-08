@@ -5,7 +5,7 @@ use rfd::FileDialog;
 use crate::ipv4::{calculator::LAST_N, types::IpSubnetResult};
 
 #[component]
-pub fn CopyButton(get_text: ReadOnlySignal<String>) -> Element {
+pub fn CopyButton(get_text: ReadSignal<String>) -> Element {
     let mut copied = use_signal(|| false);
 
     // This effect ensures that even if the key fails, 
@@ -41,7 +41,7 @@ pub fn CopyButton(get_text: ReadOnlySignal<String>) -> Element {
 
 
 #[component]
-pub fn ExportButton(default_filename: String, mime: String, get_content: ReadOnlySignal<String>, #[props(default = "Export CSV".to_string())] label: String) -> Element {
+pub fn ExportButton(default_filename: String, mime: String, get_content: ReadSignal<String>, #[props(default = "Export CSV".to_string())] label: String) -> Element {
     rsx! {
         button {
             class: "ml-2 px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 transition",
@@ -66,8 +66,8 @@ pub fn ExportButton(default_filename: String, mime: String, get_content: ReadOnl
 pub fn SummaryRow(label: &'static str, value: String) -> Element {
     rsx! {
         tr { class: "border-b border-gray-700", 
-            th { class: "px-4 py-3 font-medium text-gray-300 w-1/3", "{label}" }
-            td { class: "px-4 py-3 break-all", "{value}" }
+            th { class: "px-4 py-3 font-medium text-gray-300 w-1/3", span {"{label}" }}
+            td { class: "px-4 py-3 break-all", span {"{value}" }}
         }
     }
 }

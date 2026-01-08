@@ -115,12 +115,7 @@ pub fn InputPanel(
                     style: SELECT_STYLE,
                     value: "{prefix_input}",
                     onchange: move |evt| prefix_input.set(evt.value()),
-                    /*
-                    { PREFIX_OPTIONS.iter().map(|&(_, length)| rsx! {
-                        option { key: "{length}", value: "{length}", "{length}" }
-                    })}
-                    */
-                    { PREFIX_OPTIONS.iter().map(|&(prefix, prefix_length)| {
+                    { PREFIX_OPTIONS.iter().map(|&(_prefix, prefix_length)| {
                         let is_selected = *prefix_input.read() == *prefix_length;
                         rsx! {
                             option {
@@ -133,30 +128,6 @@ pub fn InputPanel(
                     })}
                 }
             }
-            /*
-            select {
-                    class: "w-full px-4 py-3 pr-10 text-base border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none",
-                    style: "background-image: url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e\"); background-position: right 0.75rem center; background-repeat: no-repeat; background-size: 1.5em;",
-
-                    // Control the select with the current signal value
-                    value: "{prefix_input}",
-
-                    onchange: move |evt| prefix_input.set(evt.value()),
-
-                    { PREFIX_OPTIONS.iter().map(|&(prefix, prefix_length)| {
-                        let is_selected = *prefix_input.read() == *prefix_length;
-                        rsx! {
-                            option {
-                                class: "text-base",
-                                value: "{prefix_length}",
-                                selected: is_selected,
-                                "{prefix_length} "
-                            }
-                        }
-                    })}
-                }
-                */
-
             FormField { label: "Subnet Mode",
                 select {
                     class: "block w-60 px-4 py-3 pr-10 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-gray-700",
@@ -289,7 +260,7 @@ pub fn InputPanel(
                             tr {
                                 th { span{"Level" }}
                                 th { span{"Label" }}
-                                th { span{"# Subnets"} }
+                                th { span{"# of Subnets"} }
                                 th { span{"Bits" }}
                             }
                         }
@@ -338,8 +309,8 @@ pub fn SubnetBitsDropdown(
             // Main toggle button
             button {
                 class: "w-60 px-4 py-2 text-left text-sm text-white bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent flex justify-between items-center",
-                prevent_default: "onclick",
                 onclick: move |evt| {
+                    evt.prevent_default();
                     evt.stop_propagation();
                     is_open.toggle();
                 },

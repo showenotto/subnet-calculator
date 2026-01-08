@@ -5389,7 +5389,7 @@ dependencies = [
 
 [[package]]
 name = "subnet-calculator"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "arboard",
  "dioxus 0.7.2",

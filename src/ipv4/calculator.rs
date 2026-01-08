@@ -56,7 +56,7 @@ pub fn calculate(
 ) -> Result<CalculationResult, Ipv4InputError> {
     let base_network = parse_network(ip, mask_or_prefix)?;
 
-    let (new_prefix, mut subnet_iter): (Option<u8>, Box<dyn Iterator<Item = Ipv4Net>>) = if let Some(hosts) = needed_hosts {
+    let (new_prefix, subnet_iter): (Option<u8>, Box<dyn Iterator<Item = Ipv4Net>>) = if let Some(hosts) = needed_hosts {
         let required = hosts + 2;
         let bits_for_hosts = (required as u64).next_power_of_two().trailing_zeros() as u8;
         let new_prefix = 32 - bits_for_hosts;
@@ -66,16 +66,19 @@ pub fn calculate(
         } else {
             0
         };
+       
 
-        if hosts > available_usable {
-            return Err(Ipv4InputError::ParseError("Too many hosts requested".into()));
-        }
+    // Continue collecting the rest (respecting LIMIT and LAST_N)
+    // You'll need to adjust your collect_subnets helper or manually extend the vec
+    if hosts > available_usable {
+        return Err(Ipv4InputError::ParseError("Too many hosts requested".into()));
+    }
 
         // Fix: Manual map error from PrefixLenError to Ipv4InputError
-        let iter = base_network.subnets(new_prefix)
-            .map_err(|_| Ipv4InputError::InvalidPrefix)?;
-
+    let iter = base_network.subnets(new_prefix)
+        .map_err(|_| Ipv4InputError::InvalidPrefix)?;
         (Some(new_prefix), Box::new(iter))
+
     } else if let Some(count) = needed_subnets {
         if count == 0 || (count as u128) > 1u128 << (32 - base_network.prefix_len() as u32) {
             return Err(Ipv4InputError::ParseError("Too many subnets requested".into()));
@@ -103,21 +106,36 @@ pub fn calculate(
     };
 
     let subnet_prefix = new_prefix.unwrap_or(base_network.prefix_len());
+
+    // We need to consume the first item from the iterator to use it as the summary
+    let mut subnet_iter = subnet_iter; // Ensure it is mutable
+    let first_subnet = subnet_iter.next();
+
+    // Decide what the summary should be
+    let summary_net = first_subnet.unwrap_or(base_network);
+
+    // Re-construct the collection logic to include the first subnet we just pulled out
+    let mut subnets = Vec::new();
+    subnets.push(IpSubnetResult::V4(build_subnet_result(summary_net)));
+
+    // Continue collecting the rest using your existing helper
     let iter_ref: &mut dyn Iterator<Item = Ipv4Net> = &mut *subnet_iter;
-    let subnets = collect_subnets(
+    let mut remaining_subnets = collect_subnets(
         iter_ref,
-        total_subnets,
+        total_subnets - 1, // Subtract 1 because we already took the first one
         subnet_prefix,
         base_network,
-        LIMIT,
+        LIMIT - 1,
         LAST_N,
         32,
         |net| IpSubnetResult::V4(build_subnet_result(net)),
     );
+    subnets.append(&mut remaining_subnets);
 
     Ok(CalculationResult {
         base_network,
-        summary: IpSubnetResult::V4(build_subnet_result(base_network)),
+        //summary: IpSubnetResult::V4(build_subnet_result(base_network)),
+        summary: IpSubnetResult::V4(build_subnet_result(summary_net)),
         subnets,
         new_prefix,
         total_subnets,

@@ -1,7 +1,7 @@
 use ipnet::Ipv4Net;
 
 pub use crate::common::types::{
-   IpSubnetResult, SubnetMode, SubnetResultV4 as SubnetResult,
+   IpSubnetResult, SubnetMode,
 };
 
 

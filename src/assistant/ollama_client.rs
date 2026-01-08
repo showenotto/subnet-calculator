@@ -1,7 +1,6 @@
 use ollama_rs::Ollama;
 use ollama_rs::generation::chat::request::ChatMessageRequest;
 use ollama_rs::generation::chat::{ChatMessage, ChatMessageResponseStream};
-use ollama_rs::models::LocalModel;
 
 pub struct OllamaClient {
     client: Ollama,
@@ -16,22 +15,9 @@ impl OllamaClient {
         }
     }
 
-    /// Check if Ollama is reachable
-    pub async fn is_available() -> bool {
-        Ollama::default().list_local_models().await.is_ok()
-    }
-
-    /// Get a list of installed models
-    pub async fn get_local_models() -> Vec<String> {
-        match Ollama::default().list_local_models().await {
-            Ok(models) => models.into_iter().map(|m| m.name).collect(),
-            Err(_) => vec![],
-        }
-    }
-
     pub async fn send_chat(&self, user_query: String) -> Option<ChatMessageResponseStream> {
     let system_msg = ChatMessage::system(
-        "You are a Subnetting Expert. Provide precise networking calculations.".to_string()
+        "".to_string()
     );
     let user_msg = ChatMessage::user(user_query);
 

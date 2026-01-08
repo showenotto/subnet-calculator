@@ -198,6 +198,12 @@ fn SummaryView(calc: CalculationResult) -> Element {
                     SummaryRow { label: "First Address", value: "{summary_ref.first_host}" }
                     SummaryRow { label: "Last Address", value: "{summary_ref.last_host}" }
                     SummaryRow { label: "Total Subnets", value: "{calc.total_subnets}" }
+                    if let Some(new_p) = calc.new_prefix {
+                        SummaryRow { 
+                            label: "New Prefix", 
+                            value: "/{calc.base_network.prefix_len()} → /{new_p}" 
+                        }
+                    }
                 }
             }
         }

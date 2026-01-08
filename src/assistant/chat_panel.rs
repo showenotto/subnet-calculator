@@ -3,9 +3,8 @@ use ollama_rs::Ollama;
 use futures_util::StreamExt;
 use crate::assistant::types::Message;
 use crate::assistant::OllamaClient;
-use dioxus_markdown::Markdown;
 use pulldown_cmark::{Parser, Options, html};
-use crate::components::forms::{FormField, INPUT_CLASS, SELECT_STYLE};
+use crate::components::forms::{SELECT_STYLE};
 
 
 

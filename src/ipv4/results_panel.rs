@@ -134,11 +134,12 @@ fn SummaryView(calc: CalculationResult) -> Element {
                     SummaryRow { label: "First Host", value: summary_ref.first_host.clone().unwrap_or("-".into()) }
                     SummaryRow { label: "Last Host", value: summary_ref.last_host.clone().unwrap_or("-".into()) }
                     SummaryRow { label: "Broadcast", value: "{summary_ref.broadcast}" }
+                    SummaryRow { label: "Usable Hosts", value: "{summary_ref.usable_hosts}" }
                     SummaryRow { label: "Total Subnets", value: "{calc.total_subnets}" }
                     
                     if let Some(p) = calc.new_prefix {
                         tr { class: "border-b border-gray-700",
-                            th { class: "px-4 py-3 font-medium text-gray-300 w-1/3", span {"New Prefix" }}
+                            th { class: "px-4 py-3 font-medium text-gray-300 w-1/3", span {"New CIDR" }}
                             td { class: "px-4 py-3", span {"/{calc.base_network.prefix_len()} → /{p}" }}
                         }
                     }

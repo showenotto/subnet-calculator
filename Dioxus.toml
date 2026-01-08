@@ -1,14 +1,15 @@
 [application]
+name = "subnet-calculator"
 asset_dir = "assets"
 
-[web.app]
-
-# HTML title tag content
-title = "subnet-calculator"
-
-# include `assets` in web platform
 [web.resource]
-style = ["tailwind.css", "main.css"]
+style = ["main.css"]
+
+[bundle]
+identifier = "com.showen"
+publisher = "Showen"
+resources = ["assets/"]
+
 
 # Additional JavaScript files
 script = []
