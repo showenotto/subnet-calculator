@@ -8,10 +8,12 @@ mod assistant;
 
 use dioxus::{desktop::{Config, LogicalSize, WindowBuilder}, prelude::*};
 use app::app;
+use std::fs;
+use std::env;
 
 fn main() {
-    //launch(App);
-    let config = Config::default()
+    
+    let mut config = Config::default()
         .with_window(
             WindowBuilder::new()
                 .with_title("Subnet Calculator")
@@ -21,6 +23,22 @@ fn main() {
                 .with_background_color([17, 24, 39, 255].into())
                 .with_inner_size(LogicalSize::new(1200, 800))
         );
+    #[cfg(target_os = "windows")]
+    {
+        // Try to get the local app data directory
+        if let Ok(app_data) = env::var("LOCALAPPDATA") {
+            use std::path::PathBuf;
+
+            let data_dir = PathBuf::from(app_data).join("com.showen.SubnetCalculator");
+            
+            // Ensure the directory exists
+            let _ = fs::create_dir_all(&data_dir);
+            
+            // Update config only if we successfully got the path
+            config = config.with_data_directory(data_dir);
+        }
+
+    }
 
     // Launch with the specific config
     LaunchBuilder::desktop()

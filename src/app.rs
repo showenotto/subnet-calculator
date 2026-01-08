@@ -47,7 +47,7 @@ pub fn app() -> Element {
             }
         }
         else {
-            div { class: "flex flex-col min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100",
+            div { class: "flex flex-col min-h-screen bg-gray-900 text-gray-100",
                 Header {}
                 Tabs {
                     active_tab: *active_tab.read(),
