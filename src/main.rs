@@ -20,7 +20,6 @@ fn main() {
                 .with_resizable(true)
                 .with_visible(false)
                 .with_always_on_top(false)
-                .with_background_color([17, 24, 39, 255].into())
                 .with_inner_size(LogicalSize::new(1200, 800))
         );
     #[cfg(target_os = "windows")]
