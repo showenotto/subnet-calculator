@@ -1,50 +1,49 @@
-# Development
+## Subnet Calculator
+This calculator divides IP networks into smaller, manageable sub-networks (subnets). It helps network administrators quickly determine network details such as network address, broadcast address, network boundaries, usable host range, subnet masks, prefix length, etc. Using this tool will reduce human error and improve efficiency when designing or troubleshooting IP networks.
 
-Your new bare-bones project includes minimal organization with a single `main.rs` file and a few assets.
+### IPv4 subnetting
+IPv4 subnetting is the process of dividing a 32-bit IPv4 address space into smaller networks by extending the network prefix using a subnet mask.
 
-```
-project/
-├─ assets/ # Any assets that are used by the app should be placed here
-├─ src/
-│  ├─ main.rs # main.rs is the entry point to your application and currently contains all components for the app
-├─ Cargo.toml # The Cargo.toml file defines the dependencies and feature flags for your project
-```
+Example: Inspect given subnet
+<img width="1600" height="900" alt="image" src="https://github.com/user-attachments/assets/69672331-cb52-4dfa-b3a6-bab946e94d7d" />
 
-### Automatic Tailwind (Dioxus 0.7+)
+Example: Subnet by number of hosts
+<img width="1552" height="758" alt="image" src="https://github.com/user-attachments/assets/9ec5304e-0741-4929-9db8-f733c91266f7" />
 
-As of Dioxus 0.7, there no longer is a need to manually install tailwind. Simply `dx serve` and you're good to go!
 
-Automatic tailwind is supported by checking for a file called `tailwind.css` in your app's manifest directory (next to Cargo.toml). To customize the file, use the dioxus.toml:
+#### Features
+- Subnet Modes: Inspect given subnet, by number of hosts/subnets
+- Copy and Export results to CSV
 
-```toml
-[application]
-tailwind_input = "my.css"
-tailwind_output = "assets/out.css" # also customize the location of the out file!
-```
+### IPv6 subnetting
+IPv6 subnetting organizes the vastly larger 128-bit IPv6 address space into hierarchical networks using prefix lengths.
 
-### Tailwind Manual Install
+Example: Subnet by number of subnets
+<img width="1562" height="756" alt="image" src="https://github.com/user-attachments/assets/f9610c8d-0386-430c-86e9-4849e684a2ef" />
 
-To use tailwind plugins or manually customize tailwind, you can can install the Tailwind CLI and use it directly.
+Example: Subnet by hierarchy
+<img width="1542" height="762" alt="image" src="https://github.com/user-attachments/assets/3d5d3057-6ac2-44e5-b730-51850b619f52" />
 
-### Tailwind
-1. Install npm: https://docs.npmjs.com/downloading-and-installing-node-js-and-npm
-2. Install the Tailwind CSS CLI: https://tailwindcss.com/docs/installation/tailwind-cli
-3. Run the following command in the root of the project to start the Tailwind CSS compiler:
+#### Features
+- Subnet Modes: Inspect given subnet, by number of subnets and by hierarchy
+- Copy and Export results to CSV (And JSON, for hierarchy mode)
 
+### AI Assistant
+NB: To use this feature you need to install ollama (https://ollama.com/) on your system and then install any AI model that is available. About 5-10 GB+ storage needed, plus decent CPU power for the AI model to run and process prompts.
+
+It is just a chat bot that can be used to answer simple network relating questions nothing special.
+
+<img width="1560" height="791" alt="image" src="https://github.com/user-attachments/assets/cc0b3749-9fb3-4953-a724-d0dbdc5f10e7" />
+
+
+### Building the project
+
+Linux:
 ```bash
-npx @tailwindcss/cli -i ./input.css -o ./assets/tailwind.css --watch
+dx bundle --linux --release --package-types deb
 ```
 
-### Serving Your App
-
-Run the following command in the root of your project to start developing with the default platform:
-
+Windows:
 ```bash
-dx serve
+dx bundle --windows --release --package-types msi
 ```
-
-To run for a different platform, use the `--platform platform` flag. E.g.
-```bash
-dx serve --platform desktop
-```
-
