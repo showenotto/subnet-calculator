@@ -1,11 +1,10 @@
 [package]
-name = "subnet-calculator"
+name = "subnet_calculator"
 version = "1.0.0"
-authors = ["Showen Otto"]
+authors = ["Showen"]
 edition = "2024"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
 arboard = "3.6.1"
 dioxus = { version = "0.7.1", features = [] }

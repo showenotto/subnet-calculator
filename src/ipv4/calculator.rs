@@ -55,6 +55,9 @@ pub fn calculate(
     needed_subnets: Option<u32>,
 ) -> Result<CalculationResult, Ipv4InputError> {
     let base_network = parse_network(ip, mask_or_prefix)?;
+    let parent_prefix = std::cmp::min(base_network.prefix_len(), 24);
+    let parent_range = Ipv4Net::new(base_network.addr(), parent_prefix)
+        .map_err(|_| Ipv4InputError::InvalidPrefix)?;
 
     let (new_prefix, subnet_iter): (Option<u8>, Box<dyn Iterator<Item = Ipv4Net>>) = if let Some(hosts) = needed_hosts {
         let required = hosts + 2;
@@ -75,7 +78,9 @@ pub fn calculate(
     }
 
         // Fix: Manual map error from PrefixLenError to Ipv4InputError
-    let iter = base_network.subnets(new_prefix)
+
+   //let iter = base_network.subnets(new_prefix)
+   let iter = parent_range.subnets(new_prefix)
         .map_err(|_| Ipv4InputError::InvalidPrefix)?;
         (Some(new_prefix), Box::new(iter))
 
@@ -100,7 +105,8 @@ pub fn calculate(
     };
 
     let total_subnets: u128 = if let Some(np) = new_prefix {
-        1u128 << (np - base_network.prefix_len()) as u32
+        //1u128 << (np - base_network.prefix_len()) as u32
+        1u128 << (np - parent_prefix)as u32
     } else {
         1
     };

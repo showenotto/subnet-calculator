@@ -17,6 +17,10 @@ icon = [
   "assets/icon-512.png",
   "assets/icon-1024.png"
 ]
+
+[bundle.linux]   
+resources = ["assets/SubnetCalculator.desktop"]
+
 # Additional JavaScript files
 script = []
 
