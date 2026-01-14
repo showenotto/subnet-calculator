@@ -1,1 +1,0 @@
-{"rustc":4758242423518056681,"features":"","declared_features":"","target":0,"profile":0,"path":0,"deps":[[8015927905215266592,"build_script_build",false,2095039667696465851]],"local":[{"RerunIfChanged":{"output":"debug/build/dioxus-desktop-b7bc422075c4cfc1/output","paths":["./src/ts/native_eval.ts"]}}],"rustflags":[],"config":0,"compile_kind":0}
