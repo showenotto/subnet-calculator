@@ -77,9 +77,6 @@ pub fn calculate(
         return Err(Ipv4InputError::ParseError("Too many hosts requested".into()));
     }
 
-        // Fix: Manual map error from PrefixLenError to Ipv4InputError
-
-   //let iter = base_network.subnets(new_prefix)
    let iter = parent_range.subnets(new_prefix)
         .map_err(|_| Ipv4InputError::InvalidPrefix)?;
         (Some(new_prefix), Box::new(iter))
@@ -105,7 +102,6 @@ pub fn calculate(
     };
 
     let total_subnets: u128 = if let Some(np) = new_prefix {
-        //1u128 << (np - base_network.prefix_len()) as u32
         1u128 << (np - parent_prefix)as u32
     } else {
         1
@@ -140,7 +136,6 @@ pub fn calculate(
 
     Ok(CalculationResult {
         base_network,
-        //summary: IpSubnetResult::V4(build_subnet_result(base_network)),
         summary: IpSubnetResult::V4(build_subnet_result(summary_net)),
         subnets,
         new_prefix,
